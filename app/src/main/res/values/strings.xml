@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">دليل الجاسر العقاري</string>
 
-    <string name="google_maps_api_key">AIzaSyCtcptfz13IaAs7bMwjghuVTohwl0aJ-JU</string>
 
     <string name="edit_text_hint_title">Title</string>
     <string name="edit_text_hint_owner_tel">هاتف المالك</string>

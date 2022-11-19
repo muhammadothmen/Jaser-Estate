@@ -1,16 +1,12 @@
 package com.othman.jaserestate.activities
 
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.Dialog
 import android.content.*
 import android.graphics.Bitmap
-import android.location.Location
-import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
@@ -22,11 +18,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.gms.location.*
-import com.google.android.libraries.places.api.Places
-import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.widget.Autocomplete
-import com.othman.jaserestate.utils.GetAddressFromLatLng
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -42,7 +33,6 @@ import com.othman.jaserestate.database.DatabaseHandler
 import com.othman.jaserestate.models.HappyPlaceModel
 import com.othman.jaserestate.utils.SwipeToDeleteCallback
 import kotlinx.android.synthetic.main.activity_add_estate.*
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.area_dialog_layout.*
 import kotlinx.android.synthetic.main.edit_text_others_dialog_layout.*
 import kotlinx.android.synthetic.main.price_dialog_layout.*
@@ -59,14 +49,23 @@ import kotlin.collections.ArrayList
 class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
 
     private var floorHousesNo = 1
-    private lateinit var imagesAdapter: ImagesAdapter
     private var cal = Calendar.getInstance()
-    private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
     private var saveImageToInternalStorage = ArrayList<Uri>()
     private var mLatitude : Double = 0.0
     private var mLongitude: Double = 0.0
     private var mHappyPlaceDetails :HappyPlaceModel? = null
-    private lateinit var mFusedLocationClient: FusedLocationProviderClient // A fused location client variable which is further user to get the user's current location
+    private var otherStandard = ""
+    private var loggerName = ""
+    private var furniture = ""
+    private var partialFurnitureItems = ""
+    private var area = 50
+    private var price = 0
+    private var priceType = ""
+    private var type = SALE
+    private var loggerType = ""
+    private var offerOrDemand = 1
+    private lateinit var imagesAdapter: ImagesAdapter
+    private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
     private lateinit var selectDialog: Dialog
     private lateinit var etOtherDialog: Dialog
     private lateinit var selectAreaDialog: Dialog
@@ -102,20 +101,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var betPriceTypeList: ArrayList<String>
     private lateinit var betPriceTypeAdapter: DialogAdapter
     private lateinit var priceDialog: Dialog
-    private var otherStandard = ""
-    private var loggerName = ""
-    private var furniture = ""
-    private var partialFurnitureItems = ""
-    private var area = 50
-    private var price = 0
-    private var priceType = ""
-    private var type = SALE
-    private var loggerType = ""
-    private var offerOrDemand = 1
     private lateinit var defaultImage: String
-
-
-
 
     private val openGalleryLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
@@ -203,25 +189,11 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
 
-    private val openMapLauncher: ActivityResultLauncher<Intent> =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
-            if (result.resultCode == RESULT_OK && result.data != null) {
-                try {
-                    val place: Place = Autocomplete.getPlaceFromIntent(result.data!!)
-                    et_location.setText(place.address)
-                    mLatitude = place.latLng!!.latitude
-                    mLongitude = place.latLng!!.longitude
-                }catch (e: IOException){
-                    e.printStackTrace()
-                }
-            }
-        }
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_estate)
 
+        //set tool bar
         setSupportActionBar(tbAddPlace)
         if (supportActionBar != null){
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
@@ -230,6 +202,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         tbAddPlace.setNavigationOnClickListener {
             onBackPressed()
         }
+
+        //get offerOrDemand form main Activity
         if (intent.hasExtra(MainActivity.OFFER_OR_DEMAND)) {
             offerOrDemand = intent.getIntExtra(MainActivity.OFFER_OR_DEMAND,1)
             if (offerOrDemand == MainActivity.DEMAND){
@@ -242,6 +216,11 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 tv_add_image.visibility = View.VISIBLE
             }
         }
+
+        if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAILS)) {
+            mHappyPlaceDetails = intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS)
+        }
+
         selectDialogInit()
 
         defaultImage = ContentResolver.SCHEME_ANDROID_RESOURCE +"://" +
@@ -251,11 +230,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         if (mHappyPlaceDetails == null){
         saveImageToInternalStorage.add(Uri.parse(defaultImage))
         }
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        if (!Places.isInitialized()){
-            Places.initialize(this@AddEstateActivity,resources.getString(R.string.google_maps_api_key))
-        }
 
+        //radio button set
         rgTypes.setOnCheckedChangeListener { _, checkedId: Int ->
             if (checkedId == R.id.rbSale){
                 if (offerOrDemand == MainActivity.OFFER) {
@@ -295,12 +271,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
 
         }
 
-
-
-        if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAILS)) {
-            mHappyPlaceDetails = intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS)
-        }
-
+        //init date dialog
         dateSetListener =
             DatePickerDialog.OnDateSetListener { view, year, monthOfYear, dayOfMonth ->
                 cal.set(Calendar.YEAR, year)
@@ -308,24 +279,9 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 cal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
                 updateDateInView()
             }
-
-      /*  val heightItems = arrayListOf(SECOND_UNDER_GROUND, FIRST_UNDER_GROUND, SAME_GROUND,
-            HANGING, FIRST, SECOND, THIRD, FOURTH, FIFTH, SIXTH, SURFACE, GARDEN_UNDER_GROUND,
-            GARDEN_SAME_GROUND, GARDEN_UPPER_GROUND)
-        val heightAdapter = ArrayAdapter<String>(
-            this,
-            R.layout.spinner_item,
-            heightItems
-        )
-        sp_height.adapter = heightAdapter */
-
-
-
         updateDateInView()
 
-
-
-
+        //set data on views when edit estate
         if (mHappyPlaceDetails != null ) {
             supportActionBar?.title = "تعديل العقار"
             et_date.setText(mHappyPlaceDetails!!.loggingDate)
@@ -401,6 +357,12 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
 
         setupImagesRecyclerView()
 
+        activateListenerForViews()
+
+
+    }
+
+    private fun activateListenerForViews() {
         et_date.setOnClickListener(this)
         tv_add_image.setOnClickListener(this)
         btn_save.setOnClickListener(this)
@@ -420,14 +382,6 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         et_owner_standards.setOnClickListener(this)
         et_rent_duration.setOnClickListener(this)
         et_floor_houses_no.setOnClickListener(this)
-
-
-
-
-
-
-
-
     }
 
     private fun selectDialogInit() {
@@ -740,7 +694,6 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 })
                 selectDialog.show()
             }
-
             R.id.et_legal -> {
                 selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_legal)
                 selectRecycleView.adapter = legalAdapter
@@ -994,8 +947,6 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
 
-
-
         }
     }
 
@@ -1066,18 +1017,10 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             }.show()
     }
 
-
     private fun updateDateInView() {
         val myFormat = "yyyy.MM.dd"
         val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
         et_date.setText(sdf.format(cal.time).toString())
-    }
-    private fun isLocationEnabled(): Boolean {
-        val locationManager: LocationManager =
-            getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
-            LocationManager.NETWORK_PROVIDER
-        )
     }
 
     private  fun saveImageToInternalStorage(bitmap: Bitmap):Uri{
@@ -1100,50 +1043,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         return result
     }
 
-    @SuppressLint("MissingPermission")
-    private fun requestNewLocationData() {
-
-        val mLocationRequest = LocationRequest()
-        mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        mLocationRequest.interval = 0
-        mLocationRequest.fastestInterval = 0
-        mLocationRequest.numUpdates = 1
-
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        mFusedLocationClient.requestLocationUpdates(
-            mLocationRequest, mLocationCallback,
-            Looper.myLooper()
-        )
-    }
-
-    private val mLocationCallback = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult) {
-            val mLastLocation: Location = locationResult.lastLocation!!
-            mLatitude = mLastLocation.latitude
-            Log.e("Current Latitude", "$mLatitude")
-            mLongitude = mLastLocation.longitude
-            Log.e("Current Longitude", "$mLongitude")
-
-            val addressTask =
-                GetAddressFromLatLng(this@AddEstateActivity, mLatitude, mLongitude)
-
-            addressTask.setAddressListener(object :
-                GetAddressFromLatLng.AddressListener {
-                override fun onAddressFound(address: String?) {
-                    Log.e("Address ::", "" + address)
-                    et_location.setText(address) // Address is set to the edittext
-                }
-
-                override fun onError() {
-                    Log.e("Get Address ::", "Something is wrong...")
-                }
-            })
-
-            addressTask.getAddress()
-        }
-    }
-
-
+    //object for constants
     companion object{
         private const val IMAGE_DIRECTORY = "HappyPlacesImages"
         private const val PLACE_AUTOCOMPLETE_REQUEST_CODE = 3
@@ -1285,8 +1185,5 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
 
 
     }
-
-
-
 
 }

@@ -1,6 +1,5 @@
 package com.othman.jaserestate.activities
 
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -12,7 +11,7 @@ import com.othman.jaserestate.models.HappyPlaceModel
 import kotlinx.android.synthetic.main.activity_estate_detail.*
 
 class EstateDetailActivity : AppCompatActivity() {
-    var model:HappyPlaceModel? = null
+    private var model:HappyPlaceModel? = null
     private lateinit var imagesAdapter :ImagesAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,6 +30,11 @@ class EstateDetailActivity : AppCompatActivity() {
             model = intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS)
         }
 
+        showEstateDate()
+
+    }
+
+    private fun showEstateDate() {
         if (model != null) {
             supportActionBar?.title = model?.location
             setTextViewString(model?.type, tv_type)
@@ -42,7 +46,7 @@ class EstateDetailActivity : AppCompatActivity() {
             setTextViewString(model?.frontOrBack, tv_front_or_back)
             setTextViewString(model?.floorHousesNo.toString(), tv_floor_houses_no)
             setTextViewString(model?.furniture, tv_furniture)
-            if (model?.furniture == AddEstateActivity.PARTIAL_FURNITURE){
+            if (model?.furniture == AddEstateActivity.PARTIAL_FURNITURE) {
                 tv_furniture.append(" - ${model?.partialFurniture}")
             }
             setTextViewString(model?.furnitureSituation, tv_furniture_situation)
@@ -54,7 +58,7 @@ class EstateDetailActivity : AppCompatActivity() {
             setTextViewString(model?.owner, tv_owner)
             setTextViewString(model?.ownerTel, tv_owner_tel)
             setTextViewString(model?.loggerType, tv_logger)
-            if (!model?.loggerName.isNullOrEmpty()){
+            if (!model?.loggerName.isNullOrEmpty()) {
                 tv_logger.append(" - ${model?.loggerName}")
             }
             setTextViewString(model?.loggerTel, tv_logger_tel)
@@ -63,19 +67,13 @@ class EstateDetailActivity : AppCompatActivity() {
             setTextViewString(model?.rentDuration, tv_rent_duration)
             setTextViewString(model?.loggingDate, tv_date)
 
-            if (model?.offerOrDemand == MainActivity.DEMAND){
+            if (model?.offerOrDemand == MainActivity.DEMAND) {
                 rvDetailImages.visibility = View.GONE
-            }else {
+            } else {
                 rvDetailImages.visibility = View.VISIBLE
                 setupImagesRecyclerView()
             }
         }
-        btn_view_on_map.setOnClickListener {
-            val intent = Intent(this@EstateDetailActivity,MapActivity::class.java)
-            intent.putExtra(MainActivity.EXTRA_PLACE_DETAILS,model)
-            startActivity(intent)
-        }
-
     }
 
     private fun setTextViewString(value: String?, view:TextView) {
@@ -85,10 +83,8 @@ class EstateDetailActivity : AppCompatActivity() {
         }
     }
 
-
     private fun setupImagesRecyclerView() {
 
-        //rvDetailImages.layoutParams = ViewGroup.LayoutParams(MATCH_PARENT,2650)
         rvDetailImages.layoutManager = LinearLayoutManager(this)
         rvDetailImages.setHasFixedSize(true)
 

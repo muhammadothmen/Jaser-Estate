@@ -1,7 +1,5 @@
 package com.othman.jaserestate.activities
 
-
-
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -28,9 +26,10 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
     private var binding: ActivityMainBinding? = null
-    private lateinit var placesAdapter: HappyPlaceAdapter
     private var offerOrDemand = OFFER
     private var isDone = NOT_DONE
+    private lateinit var placesAdapter: HappyPlaceAdapter
+
 
     private val openAddHappyPlaceActivity: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
@@ -49,17 +48,13 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(tbMain)
 
-
         fabAddHappyPlace.setOnClickListener {
             val intent = Intent(this@MainActivity, AddEstateActivity::class.java)
-            //startActivityForResult(intent, ADD_PLACE_ACTIVITY_REQUEST_CODE)
             intent.putExtra(OFFER_OR_DEMAND,offerOrDemand)
             openAddHappyPlaceActivity.launch(intent)
         }
 
-
-
-
+        //set the search view
         placesSearch.findViewById<ImageView>(androidx.appcompat.R.id.search_mag_icon
         ).setColorFilter(Color.WHITE)
         placesSearch.findViewById<ImageView>(androidx.appcompat.R.id.search_close_btn
@@ -67,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         placesSearch.findViewById<TextView>(androidx.appcompat.R.id.search_src_text
         ).setTextColor(Color.WHITE)
 
-
+        //set the radio button
         rgOfferOrDemand.setOnCheckedChangeListener { _, checkedId: Int ->
             if (checkedId == R.id.rbOffer){
                 offerOrDemand = OFFER
@@ -90,12 +85,9 @@ class MainActivity : AppCompatActivity() {
 
         }
 
-
         getHappyPlacesListFromLocalDB()
 
     }
-
-
 
 
     private fun getHappyPlacesListFromLocalDB(){
@@ -177,9 +169,8 @@ class MainActivity : AppCompatActivity() {
         deleteItemTouchHelper.attachToRecyclerView(rvHappyPlacesList)
     }
 
-
+    //object for constants
     companion object {
-        private const val ADD_PLACE_ACTIVITY_REQUEST_CODE = 1
         internal const val EXTRA_PLACE_DETAILS = "extra_place_details"
         internal const val OFFER_OR_DEMAND = "offerOrDemand"
         internal const val OFFER = 1
