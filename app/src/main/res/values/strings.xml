@@ -1,0 +1,63 @@
+<resources>
+    <string name="app_name">دليل الجاسر العقاري</string>
+
+    <string name="google_maps_api_key">AIzaSyCtcptfz13IaAs7bMwjghuVTohwl0aJ-JU</string>
+
+    <string name="edit_text_hint_title">Title</string>
+    <string name="edit_text_hint_owner_tel">هاتف المالك</string>
+    <string name="edit_text_hint_logger_tel">هاتف مسجل العقار</string>
+    <string name="edit_text_hint_positives">مميزات العقار</string>
+    <string name="edit_text_hint_negatives">سلبيات العقار</string>
+    <string name="edit_text_hint_date">التاريخ</string>
+    <string name="edit_text_hint_area">المساحة</string>
+
+
+    <string name="edit_text_hint_location">العنوان</string>
+    <string name="text_add_image">إضافة صور</string>
+    <string name="btn_text_save">حفظ</string>
+    <string name="btn_text_update">تعديل</string>
+
+    <string name="note_text_no_happy_places_found_yet_kindly_add_one">No Happy Places Found Yet. Kindly add one.</string>
+    <string name="image_content_description">image</string>
+
+    <string name="btn_text_view_on_map">VIEW ON MAP</string>
+    <string name="add_place_select_current_location_text">SELECT CURRENT LOCATION</string>
+    <string name="edit_text_hint_roomNo">عدد الغرف</string>
+    <string name="edit_text_hint_height">الطابق</string>
+    <string name="edit_text_hint_directions">الاتجاه</string>
+    <string name="edit_text_hint_furniture">الفرش</string>
+    <string name="edit_text_hint_situation">حالة المنزل</string>
+    <string name="edit_text_hint_legal">الفراغة</string>
+    <string name="edit_text_hint_price">السعر</string>
+    <string name="edit_text_hint_front_or_back">الواجهة</string>
+    <string name="dialog_select_item_title">اختر العنصر</string>
+    <string name="btn_text_dialog_ok">أدخل</string>
+    <string name="btn_text_dialog_cancel">رجوع</string>
+    <string name="dialog_enter_area">أدخل قيمة المساحة</string>
+    <string name="dialog_enter_floor_houses_number">أدخل عدد المنازل</string>
+    <string name="edit_text_hint_owner">اسم المالك</string>
+
+    <string name="edit_text_hint_logger">مسجل العقار</string>
+    <string name="edit_text_hint_priority">الأولوية</string>
+    <string name="rb_text_sale">بيع</string>
+    <string name="rb_text_rent">آجار</string>
+    <string name="rb_text_bet">رهنية</string>
+    <string name="rb_text_demand">مطلوب</string>
+    <string name="rb_text_offer">معروض</string>
+    <string name="edit_text_hint_furniture_situation">حالة الفرش</string>
+    <string name="edit_text_hint_owner_standards">معايير المؤجر</string>
+    <string name="edit_text_hint_floor_houses_no">عدد المنازل في الطابق الواحد</string>
+    <string name="edit_text_hint_rent_duration">مدة الآجار</string>
+    <string name="et_other_dialog_title_name">أدخل الاسم</string>
+    <string name="et_other_dialog_title_standard">أدخل المعيار</string>
+    <string name="tv_text_area_unit">متر مربع</string>
+    <string name="dialog_enter_price">أدخل السعر</string>
+    <string name="edit_text_hint_sale_price_type">البازار</string>
+    <string name="edit_text_hint_rent_price_type">نوع الآجار</string>
+    <string name="edit_text_hint_bet_price_type">مدة الرهنية</string>
+    <string name="et_other_dialog_title_furniture">أدخل الفرش</string>
+    <string name="rb_text_history">السجل</string>
+    <string name="edit_text_hint_type">النوع</string>
+    <string name="rb_text_buy">شراء</string>
+
+</resources>

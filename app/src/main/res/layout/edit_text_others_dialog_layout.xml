@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/tv_other_dialog_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="@dimen/btn_text_size"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_margin="10dp"
+        android:text="@string/et_other_dialog_title_name"
+        android:gravity="center"
+        />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_other_dialog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/add_screen_til_marginTop"
+            >
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/et_other_dialog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:gravity="right"
+            android:textColor="@color/primary_text_color"
+            android:textColorHint="@color/secondary_text_color"
+            android:textSize="@dimen/edit_text_text_size" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp">
+
+        <TextView
+            android:id="@+id/tv_other_dialog_cancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/btn_text_dialog_cancel"
+            android:padding="10dp"
+            android:gravity="center"
+            android:textColor="@color/black"
+            android:textSize="@dimen/btn_text_size"
+            android:foreground="?attr/selectableItemBackground"
+            />
+        <TextView
+            android:id="@+id/tv_other_dialog_ok"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/btn_text_dialog_ok"
+            android:textSize="@dimen/btn_text_size"
+            android:padding="10dp"
+            android:textColor="@android:color/holo_red_dark"
+            android:gravity="center"
+            android:foreground="?attr/selectableItemBackground"
+            />
+
+
+    </LinearLayout>
+
+
+
+
+</LinearLayout>
