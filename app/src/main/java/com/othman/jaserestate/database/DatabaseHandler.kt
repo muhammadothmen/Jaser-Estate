@@ -233,7 +233,7 @@ class DatabaseHandler(context: Context) :
                         cursor.getString(cursor.getColumnIndex(KEY_FURNITURE)),
                         cursor.getString(cursor.getColumnIndex(KEY_FURNITURE_SITUATIONS)),
                         cursor.getString(cursor.getColumnIndex(KEY_PARTIAL_FURNITURE)),
-                        cursor.getInt(cursor.getColumnIndex(KEY_PRICE)),
+                        cursor.getFloat(cursor.getColumnIndex(KEY_PRICE)),
                         cursor.getString(cursor.getColumnIndex(KEY_PRICE_TYPE)),
                         cursor.getString(cursor.getColumnIndex(KEY_LEGAL)),
                         cursor.getString(cursor.getColumnIndex(KEY_OWNER)),

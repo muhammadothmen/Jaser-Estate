@@ -16,7 +16,7 @@
     <string name="btn_text_save">حفظ</string>
     <string name="btn_text_update">تعديل</string>
 
-    <string name="note_text_no_happy_places_found_yet_kindly_add_one">No Happy Places Found Yet. Kindly add one.</string>
+    <string name="note_text_no_estate">لا يوجد عقارات لعرضها!</string>
     <string name="image_content_description">image</string>
 
     <string name="btn_text_view_on_map">VIEW ON MAP</string>
@@ -47,14 +47,15 @@
     <string name="edit_text_hint_owner_standards">معايير المؤجر</string>
     <string name="edit_text_hint_floor_houses_no">عدد المنازل في الطابق الواحد</string>
     <string name="edit_text_hint_rent_duration">مدة الآجار</string>
-    <string name="et_other_dialog_title_name">أدخل الاسم</string>
-    <string name="et_other_dialog_title_standard">أدخل المعيار</string>
+    <string name="other_dialog_title_name">أدخل الاسم</string>
+    <string name="other_dialog_title_standard">أدخل المعيار</string>
     <string name="tv_text_area_unit">متر مربع</string>
     <string name="dialog_enter_price">أدخل السعر</string>
     <string name="edit_text_hint_sale_price_type">البازار</string>
     <string name="edit_text_hint_rent_price_type">نوع الآجار</string>
     <string name="edit_text_hint_bet_price_type">مدة الرهنية</string>
-    <string name="et_other_dialog_title_furniture">أدخل الفرش</string>
+    <string name="other_dialog_title_furniture">أدخل الفرش</string>
+    <string name="other_dialog_title_room_no">أدخل عدد الغرف</string>
     <string name="rb_text_history">السجل</string>
     <string name="edit_text_hint_type">النوع</string>
     <string name="rb_text_buy">شراء</string>

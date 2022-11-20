@@ -23,7 +23,7 @@ data class HappyPlaceModel(
     val furniture: String?,
     val partialFurniture : String?,
     val furnitureSituation: String?,
-    val price: Int,
+    val price: Float,
     val priceType: String?,
     val legal: String?,
     val owner: String?,
@@ -61,7 +61,7 @@ data class HappyPlaceModel(
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
-        parcel.readInt(),
+        parcel.readFloat(),
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
@@ -100,7 +100,7 @@ data class HappyPlaceModel(
         parcel.writeString(furniture)
         parcel.writeString(partialFurniture)
         parcel.writeString(furnitureSituation)
-        parcel.writeInt(price)
+        parcel.writeFloat(price)
         parcel.writeString(priceType)
         parcel.writeString(legal)
         parcel.writeString(owner)

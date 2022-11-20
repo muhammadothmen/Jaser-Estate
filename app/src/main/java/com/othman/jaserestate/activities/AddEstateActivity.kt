@@ -1,5 +1,6 @@
 package com.othman.jaserestate.activities
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.Dialog
@@ -7,9 +8,12 @@ import android.content.*
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
@@ -59,15 +63,16 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private var furniture = ""
     private var partialFurnitureItems = ""
     private var area = 50
-    private var price = 0
+    private var price = 0.0f
     private var priceType = ""
+    private var priceUnit = ""
     private var type = SALE
     private var loggerType = ""
     private var offerOrDemand = 1
     private lateinit var imagesAdapter: ImagesAdapter
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
     private lateinit var selectDialog: Dialog
-    private lateinit var etOtherDialog: Dialog
+    private lateinit var OthersDialog: Dialog
     private lateinit var selectAreaDialog: Dialog
     private lateinit var selectRecycleView: RecyclerView
     private lateinit var heightList: ArrayList<String>
@@ -387,8 +392,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private fun selectDialogInit() {
         selectDialog = Dialog(this, R.style.Theme_Dialog)
         selectDialog.setContentView(R.layout.selcet_items_dialog)
-        etOtherDialog = Dialog(this, R.style.Theme_Dialog)
-        etOtherDialog.setContentView(R.layout.edit_text_others_dialog_layout)
+        OthersDialog = Dialog(this, R.style.Theme_Dialog)
+        OthersDialog.setContentView(R.layout.edit_text_others_dialog_layout)
         selectAreaDialog = Dialog(this, R.style.Theme_Dialog_price)
         selectAreaDialog.setContentView(R.layout.area_dialog_layout)
         priceDialog = Dialog(this, R.style.Theme_Dialog_price)
@@ -408,7 +413,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             SIX_ROOM_WITH_DISTRIBUTOR, SIX_R00M_WITH_SALON,
             SEVEN_ROOM_WITH_DISTRIBUTOR, SEVEN_R00M_WITH_SALON,
             EIGHT_ROOM_WITH_DISTRIBUTOR, EIGHT_ROOM_WITH_SALON,
-            NINE_ROOM_WITH_DISTRIBUTOR, NINE_ROOM_WITH_SALON)
+            NINE_ROOM_WITH_DISTRIBUTOR, NINE_ROOM_WITH_SALON,
+            OTHER_ROOM_N0)
         roomNoAdapter = DialogAdapter(this,roomNoList)
 
         situationList = arrayListOf(SUPER_DELUXE, DELUXE, VERY_GOOD, GOOD, MEDIUM,
@@ -483,6 +489,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
 
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onClick(v: View?) {
         when (v!!.id) {
             R.id.et_date -> {
@@ -614,7 +621,30 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 selectRecycleView.adapter = roomNoAdapter
                 roomNoAdapter.setOnClickListener(object: DialogAdapter.OnClickListener{
                     override fun onClick(position: Int) {
-                        et_roomNo.setText(roomNoList[position])
+                        if (roomNoList[position] == OTHER_ROOM_N0){
+                            OthersDialog.tv_other_dialog_title.text =
+                                resources.getString(R.string.other_dialog_title_room_no)
+                            OthersDialog.tv_other_dialog_cancel.setOnClickListener {
+                                OthersDialog.dismiss()
+                                et_roomNo.text?.clear()
+                            }
+                            OthersDialog.tv_other_dialog_ok.setOnClickListener {
+                                if (OthersDialog.et_other_dialog.text.isNullOrEmpty()) {
+                                    Toast.makeText(
+                                        this@AddEstateActivity,
+                                        "رجاءً أدخل عدد الغرف",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    et_roomNo.text = OthersDialog.et_other_dialog.text
+                                    OthersDialog.dismiss()
+                                }
+                            }
+                            OthersDialog.et_other_dialog.text?.clear()
+                            OthersDialog.show()
+                        }else {
+                            et_roomNo.setText(roomNoList[position])
+                        }
                         selectDialog.dismiss()
                     }
                 })
@@ -656,27 +686,27 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                         }
                         selectDialog.dismiss()
                         if (furnitureList[position] == PARTIAL_FURNITURE) {
-                            etOtherDialog.tv_other_dialog_title.text =
-                                resources.getString(R.string.et_other_dialog_title_furniture)
-                            etOtherDialog.tv_other_dialog_cancel.setOnClickListener {
-                                etOtherDialog.dismiss()
+                            OthersDialog.tv_other_dialog_title.text =
+                                resources.getString(R.string.other_dialog_title_furniture)
+                            OthersDialog.tv_other_dialog_cancel.setOnClickListener {
+                                OthersDialog.dismiss()
                                 et_furniture.text?.clear()
                             }
-                            etOtherDialog.tv_other_dialog_ok.setOnClickListener {
-                                if (etOtherDialog.et_other_dialog.text.isNullOrEmpty()) {
+                            OthersDialog.tv_other_dialog_ok.setOnClickListener {
+                                if (OthersDialog.et_other_dialog.text.isNullOrEmpty()) {
                                     Toast.makeText(
                                         this@AddEstateActivity,
                                         "رجاءً أدخل الفرش",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 } else {
-                                    partialFurnitureItems = etOtherDialog.et_other_dialog.text.toString()
+                                    partialFurnitureItems = OthersDialog.et_other_dialog.text.toString()
                                     et_furniture.append(": $partialFurnitureItems")
-                                    etOtherDialog.dismiss()
+                                    OthersDialog.dismiss()
                                 }
                             }
-                            etOtherDialog.et_other_dialog.setText(loggerName)
-                            etOtherDialog.show()
+                            OthersDialog.et_other_dialog.setText(partialFurnitureItems)
+                            OthersDialog.show()
                         }
                     }
                 })
@@ -725,28 +755,28 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                             et_logger_type.setText(loggerTypeList[position])
                             selectDialog.dismiss()
                         if (loggerTypeList[position] != OWNER) {
-                            etOtherDialog.tv_other_dialog_title.text =
-                                resources.getString(R.string.et_other_dialog_title_name)
-                            etOtherDialog.tv_other_dialog_cancel.setOnClickListener {
-                                etOtherDialog.dismiss()
+                            OthersDialog.tv_other_dialog_title.text =
+                                resources.getString(R.string.other_dialog_title_name)
+                            OthersDialog.tv_other_dialog_cancel.setOnClickListener {
+                                OthersDialog.dismiss()
                                 et_logger_type.text?.clear()
                             }
-                            etOtherDialog.tv_other_dialog_ok.setOnClickListener {
-                                if (etOtherDialog.et_other_dialog.text.isNullOrEmpty()) {
+                            OthersDialog.tv_other_dialog_ok.setOnClickListener {
+                                if (OthersDialog.et_other_dialog.text.isNullOrEmpty()) {
                                     Toast.makeText(
                                         this@AddEstateActivity,
                                         "رجاءً أدخل الإسم",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 } else {
-                                    loggerName = etOtherDialog.et_other_dialog.text.toString()
+                                    loggerName = OthersDialog.et_other_dialog.text.toString()
 
                                     et_logger_type.append(": $loggerName")
-                                    etOtherDialog.dismiss()
+                                    OthersDialog.dismiss()
                                 }
                             }
-                            etOtherDialog.et_other_dialog.setText(loggerName)
-                            etOtherDialog.show()
+                            OthersDialog.et_other_dialog.setText(loggerName)
+                            OthersDialog.show()
                         }else{
                             loggerName = ""
                         }
@@ -775,27 +805,27 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                         et_owner_standards.setText(ownerStandardsList[position])
                         selectDialog.dismiss()
                         if (ownerStandardsList[position] == OTHER_STANDARDS) {
-                            etOtherDialog.tv_other_dialog_title.text =
-                                resources.getString(R.string.et_other_dialog_title_standard)
-                            etOtherDialog.tv_other_dialog_cancel.setOnClickListener {
-                                etOtherDialog.dismiss()
+                            OthersDialog.tv_other_dialog_title.text =
+                                resources.getString(R.string.other_dialog_title_standard)
+                            OthersDialog.tv_other_dialog_cancel.setOnClickListener {
+                                OthersDialog.dismiss()
                                 et_owner_standards.text?.clear()
                             }
-                            etOtherDialog.tv_other_dialog_ok.setOnClickListener {
-                                if (etOtherDialog.et_other_dialog.text.isNullOrEmpty()) {
+                            OthersDialog.tv_other_dialog_ok.setOnClickListener {
+                                if (OthersDialog.et_other_dialog.text.isNullOrEmpty()) {
                                     Toast.makeText(
                                         this@AddEstateActivity,
                                         "رجاءً أدخل المعيار",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 } else {
-                                    otherStandard = etOtherDialog.et_other_dialog.text.toString()
+                                    otherStandard = OthersDialog.et_other_dialog.text.toString()
                                     et_owner_standards.append(": $otherStandard")
-                                    etOtherDialog.dismiss()
+                                    OthersDialog.dismiss()
                                 }
                             }
-                            etOtherDialog.et_other_dialog.setText(otherStandard)
-                            etOtherDialog.show()
+                            OthersDialog.et_other_dialog.setText(otherStandard)
+                            OthersDialog.show()
                         }
                     }
                 })
@@ -813,89 +843,94 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 selectDialog.show()
             }
             R.id.et_price -> {
-                var adapter: DialogAdapter
-                var list: ArrayList<String>
-                if (type == SALE){
-                    adapter = salePriceTypeAdapter
-                    list = salePriceTypeList
-                    selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_sale_price_type)
-                    selectRecycleView.adapter = salePriceTypeAdapter
-                }else if(type == RENT){
-                    adapter = rentPriceTypeAdapter
-                    list = rentPriceTypeList
-                    selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_rent_price_type)
-                    selectRecycleView.adapter = rentPriceTypeAdapter
-                }else{
-                    adapter = betPriceTypeAdapter
-                    list = betPriceTypeList
-                    selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_bet_price_type)
-                    selectRecycleView.adapter = betPriceTypeAdapter
+                var priceTypesList = ArrayList<String>()
+                val priceUnitsList = arrayListOf(THOUSANDS_POUNDS, MILLION_POUNDS, BILLION_POUNDS, DOLLARS, THOUSANDS_DOLLARS)
+                when(type){
+                    SALE -> {
+                        priceTypesList = arrayListOf(FINAL_PRICE, LITTLE_ARGUE_PRICE, ARGUE_PRICE)
+                    }
+                    BET -> {
+                        priceTypesList = arrayListOf(ONE_YEAR_BET, TWO_YEAR_BET, THREE_YEAR_BET, FOUR_YEAR_BET, FIVE_YEAR_BET)
+                    }
+                    RENT-> {
+                        priceTypesList = arrayListOf(ANNUAL_RENT, HALF_ANNUAL_RENT, MONTHLY_RENT)
+                    }
                 }
-                adapter.setOnClickListener(object: DialogAdapter.OnClickListener{
-                        override fun onClick(position: Int) {
-                            selectDialog.dismiss()
-                            priceType = THOUSANDS_POUNDS
-                            var factor = 5
-                            val priceUnits = arrayListOf(THOUSANDS_POUNDS, MILLION_POUNDS, BILLION_POUNDS, DOLLARS, THOUSANDS_DOLLARS)
-                            val spinnerAdapter = ArrayAdapter(this@AddEstateActivity,
-                                android.R.layout.simple_spinner_item, priceUnits)
-                            val spinner = priceDialog.findViewById<Spinner>(R.id.sp_price_dialog)
-                            if (spinner != null) {
-                                spinner.adapter = spinnerAdapter
-                            }
-                            priceDialog.sb_price_dialog.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
+                var factor = 5
+                var numberFormat = "%.3f"
+                val unitsSpinnerAdapter = ArrayAdapter(this@AddEstateActivity,
+                    android.R.layout.simple_spinner_item, priceUnitsList)
+                val typesSpinnerAdapter = ArrayAdapter(this@AddEstateActivity,
+                    android.R.layout.simple_spinner_item, priceTypesList)
+                priceDialog.sp_unit_price_dialog.adapter = unitsSpinnerAdapter
+                priceDialog.sp_type_price_dialog.adapter = typesSpinnerAdapter
+                priceDialog.sb_price_dialog.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener {
                                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                                    priceDialog.tv_dialog_price_value.text = (progress*factor).toString()
-                                    price = progress*factor
+                                    price = progress*5f/factor
+                                    priceDialog.tv_dialog_price_value.text = String.format(numberFormat, price)
                                 }
-
                                 override fun onStartTrackingTouch(seekBar: SeekBar?) {
                                 }
-
                                 override fun onStopTrackingTouch(seekBar: SeekBar?) {
                                 }
                             })
-                            priceDialog.sp_price_dialog.onItemSelectedListener = object :
-                                AdapterView.OnItemSelectedListener {
-                                override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
-                                    priceType = priceUnits[position]
-                                    when (priceUnits[position]){
-                                        THOUSANDS_POUNDS -> {
-                                            priceDialog.sb_price_dialog.max = 199
-                                            factor = 5
-                                        }
-                                        BILLION_POUNDS -> {
-                                            priceDialog.sb_price_dialog.max = 100
-                                            factor = 1
-                                        }
-                                        else -> {
-                                            priceDialog.sb_price_dialog.max = 999
-                                            factor = 1
-                                        }
-                                    }
-                                }
-                                override fun onNothingSelected(parent: AdapterView<*>) {
-                                }
+                sliderButtonListenersSet()
+                priceDialog.sp_unit_price_dialog.onItemSelectedListener = object :
+                    AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+                        priceUnit = priceUnitsList[position]
+                        when (priceUnitsList[position]){
+                            THOUSANDS_POUNDS -> {
+                                priceDialog.sb_price_dialog.max = 199
+                                factor=1
+                                numberFormat = "%.0f"
                             }
-                            priceDialog.tv_price_dialog_cancel.setOnClickListener {
-                                et_price.setText("")
-                                priceDialog.dismiss()
+                            BILLION_POUNDS -> {
+                                priceDialog.sb_price_dialog.max = 2000
+                                factor=100
+                                numberFormat = "%.3f"
+
                             }
-                            priceDialog.tv_price_dialog_ok.setOnClickListener {
-                                priceType += " - ${list[position]}"
-                                et_price.setText("$price $priceType")
-                                priceDialog.dismiss()
+                            MILLION_POUNDS -> {
+                                priceDialog.sb_price_dialog.max = 19999
+                                factor=100
+                                numberFormat = "%.3f"
+
                             }
-                            priceDialog.show()
+                            THOUSANDS_DOLLARS -> {
+                                priceDialog.sb_price_dialog.max = 19999
+                                factor=100
+                                numberFormat = "%.3f"
+
+                            }
+                            DOLLARS -> {
+                                priceDialog.sb_price_dialog.max = 199
+                                factor=1
+                                numberFormat = "%.0f"
+                            }
                         }
-                    })
-                    selectDialog.show()
-
-
-
-
-
-
+                    }
+                    override fun onNothingSelected(parent: AdapterView<*>) {
+                    }
+                    }
+                priceDialog.sp_type_price_dialog.onItemSelectedListener = object :
+                    AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(parent: AdapterView<*>, view: View, position: Int, id: Long) {
+                        priceType = priceTypesList[position]
+                    }
+                    override fun onNothingSelected(parent: AdapterView<*>) {
+                    }
+                }
+                priceDialog.tv_price_dialog_cancel.setOnClickListener {
+                    et_price.setText("")
+                    priceDialog.dismiss()
+                }
+                priceDialog.tv_price_dialog_ok.setOnClickListener {
+                    priceType = "$priceUnit - $priceType"
+                    et_price.setText("$price $priceType")
+                    priceDialog.dismiss()
+                }
+                priceDialog.show()
             }
             R.id.et_area -> {
                 selectAreaDialog.tv_area_dialog_title.text = resources.getString(R.string.dialog_enter_area)
@@ -947,6 +982,73 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
 
+        }
+    }
+
+    private fun sliderButtonListenersSet() {
+        var isPlusPressed = false
+        var isMinusPressed = false
+        priceDialog.tv_price_dialog_plus.setOnClickListener {
+            priceDialog.sb_price_dialog.progress += 1
+        }
+        priceDialog.tv_price_dialog_minus.setOnClickListener {
+            priceDialog.sb_price_dialog.progress -= 1
+        }
+
+
+        priceDialog.tv_price_dialog_plus.setOnLongClickListener {
+            val handler = Handler(Looper.myLooper()!!)
+            val runnable: Runnable = object : Runnable {
+                override fun run() {
+                    handler.removeCallbacks(this)
+                    if (isPlusPressed) {
+                        priceDialog.sb_price_dialog.progress += 1
+                        handler.postDelayed(this, 50)
+                    }
+                }
+            }
+            handler.postDelayed(runnable, 0)
+            true
+        }
+
+        priceDialog.tv_price_dialog_minus.setOnLongClickListener {
+            val handler = Handler(Looper.myLooper()!!)
+            val runnable: Runnable = object : Runnable {
+                override fun run() {
+                    handler.removeCallbacks(this)
+                    if (isMinusPressed) {
+                        priceDialog.sb_price_dialog.progress -= 1
+                        handler.postDelayed(this, 50)
+                    }
+                }
+            }
+            handler.postDelayed(runnable, 0)
+            true
+        }
+
+        priceDialog.tv_price_dialog_plus.setOnTouchListener { v, event ->
+            when (event?.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    isPlusPressed = true
+                }
+                MotionEvent.ACTION_UP -> {
+                    isPlusPressed = false
+                }
+            }
+
+            false
+        }
+
+        priceDialog.tv_price_dialog_minus.setOnTouchListener { v, event ->
+            when (event?.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    isMinusPressed = true
+                }
+                MotionEvent.ACTION_UP -> {
+                    isMinusPressed = false
+                }
+            }
+            false
         }
     }
 
@@ -1088,6 +1190,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         private const val EIGHT_ROOM_WITH_SALON  = "ثمان غرف وصالون"
         private const val NINE_ROOM_WITH_DISTRIBUTOR  = "تسع غرف وموزع"
         private const val NINE_ROOM_WITH_SALON  = "تسع غرف وصالون"
+        private const val OTHER_ROOM_N0 = "أخرى"
         //situation and furniture list
         private const val SUPER_DELUXE  = "سوبر ديلوكس"
         private const val DELUXE  = "ديلوكس"
