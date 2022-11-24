@@ -6,8 +6,10 @@ import android.app.DatePickerDialog
 import android.app.Dialog
 import android.content.*
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
@@ -19,6 +21,7 @@ import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -39,15 +42,12 @@ import com.othman.jaserestate.utils.SwipeToDeleteCallback
 import kotlinx.android.synthetic.main.activity_add_estate.*
 import kotlinx.android.synthetic.main.area_dialog_layout.*
 import kotlinx.android.synthetic.main.edit_text_others_dialog_layout.*
+import kotlinx.android.synthetic.main.item_images.*
 import kotlinx.android.synthetic.main.price_dialog_layout.*
 import kotlinx.android.synthetic.main.selcet_items_dialog.*
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
-import java.io.OutputStream
+import java.io.*
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
@@ -72,7 +72,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var imagesAdapter: ImagesAdapter
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
     private lateinit var selectDialog: Dialog
-    private lateinit var OthersDialog: Dialog
+    private lateinit var othersDialog: Dialog
     private lateinit var selectAreaDialog: Dialog
     private lateinit var selectRecycleView: RecyclerView
     private lateinit var heightList: ArrayList<String>
@@ -107,60 +107,29 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var betPriceTypeAdapter: DialogAdapter
     private lateinit var priceDialog: Dialog
     private lateinit var defaultImage: String
+    lateinit var currentPhotoPath: String
+    lateinit var photoURI: Uri
+
 
     private val openGalleryLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result ->
             if (result.resultCode == RESULT_OK && result.data != null) {
                 try {
                     if (result.data?.data != null) {
-                        val selectImageBitmap = MediaStore.Images.Media.getBitmap(
-                            this.contentResolver,
-                            result.data!!.data
-                        )
-                        if (saveImageToInternalStorage.size <= 10)
-                        {
-                            if (saveImageToInternalStorage[0].toString() == defaultImage) {
-                                saveImageToInternalStorage.remove(Uri.parse(defaultImage))
-                            }
-                                saveImageToInternalStorage.add(
-                                    saveImageToInternalStorage(
-                                        selectImageBitmap
-                                    )
-                                )
-
-
-                        }else{
-                            Toast.makeText(this,"You Can not add more than 10 images",Toast.LENGTH_SHORT).show()
-                        }
-                        imagesAdapter.notifyDataSetChanged()
-                    //iv_place_image.setImageBitmap(selectImageBitmap)
-                        //iv_place_image.setImageURI(result.data?.data)
+                        val photoUri = createAndSaveAccessibleUriForFile(createImageFile())
+                        copyGalleryImageToAppData(this@AddEstateActivity,result.data!!.data!!,photoUri)
                     }else if (result.data?.clipData != null){
                         val count = result.data?.clipData?.itemCount
                         for (i in 0 until count!!) {
-                            val selectImageBitmap = MediaStore.Images.Media.getBitmap(
-                                this.contentResolver,
-                                result.data?.clipData?.getItemAt(i)?.uri
-                            )
-
-                            //lifecycleScope.launch {}
-                            if (saveImageToInternalStorage[0].toString() == defaultImage) {
-                                saveImageToInternalStorage.remove(Uri.parse(defaultImage))
-                            }
-                                saveImageToInternalStorage.add(
-                                    saveImageToInternalStorage(
-                                        selectImageBitmap
-                                    )
-                                )
+                            val photoUri = createAndSaveAccessibleUriForFile(createImageFile())
+                            copyGalleryImageToAppData(this@AddEstateActivity,result.data?.clipData?.getItemAt(i)?.uri!!,photoUri)
                             if (saveImageToInternalStorage.size >= 10){
                                 break
                             }
                                 Log.e("saved image", "path: ${saveImageToInternalStorage[i]}")
-
                         }
-                        imagesAdapter.notifyDataSetChanged()
-
                     }
+                    imagesAdapter.notifyDataSetChanged()
                 }catch (e: IOException){
                     e.printStackTrace()
                     Toast.makeText(this@AddEstateActivity,
@@ -170,27 +139,11 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             }
         }
 
+
     private val openCameraLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK && result.data != null) {
-                try {
-                    val thumbnail: Bitmap = result.data!!.extras!!.get("data") as Bitmap
-
-                    if (saveImageToInternalStorage[0].toString() == defaultImage) {
-                        saveImageToInternalStorage.remove(Uri.parse(defaultImage))
-                    }
-                        saveImageToInternalStorage.add(
-                            saveImageToInternalStorage(
-                                thumbnail
-                            )
-                        )
-                    imagesAdapter.notifyDataSetChanged()
-                }catch (e: IOException){
-                    e.printStackTrace()
-                    Toast.makeText(this@AddEstateActivity,
-                        "Oops, Failed",
-                        Toast.LENGTH_SHORT).show()
-                }
+            if (result.resultCode == RESULT_OK ) {
+                imagesAdapter.notifyDataSetChanged()
             }
         }
 
@@ -392,8 +345,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private fun selectDialogInit() {
         selectDialog = Dialog(this, R.style.Theme_Dialog)
         selectDialog.setContentView(R.layout.selcet_items_dialog)
-        OthersDialog = Dialog(this, R.style.Theme_Dialog)
-        OthersDialog.setContentView(R.layout.edit_text_others_dialog_layout)
+        othersDialog = Dialog(this, R.style.Theme_Dialog)
+        othersDialog.setContentView(R.layout.edit_text_others_dialog_layout)
         selectAreaDialog = Dialog(this, R.style.Theme_Dialog_price)
         selectAreaDialog.setContentView(R.layout.area_dialog_layout)
         priceDialog = Dialog(this, R.style.Theme_Dialog_price)
@@ -477,9 +430,11 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 if (saveImageToInternalStorage.size > 1) {
                     saveImageToInternalStorage.removeAt(viewHolder.adapterPosition)
                     imagesAdapter.notifyItemRemoved(viewHolder.adapterPosition)
+                    imagesAdapter.notifyDataSetChanged()
                 }else{
                     saveImageToInternalStorage[0] = Uri.parse(defaultImage)
                     imagesAdapter.notifyItemRemoved(viewHolder.adapterPosition)
+                    imagesAdapter.notifyDataSetChanged()
                 }
             }
         }
@@ -524,7 +479,6 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             }
             R.id.btn_save -> {
                 when {
-
                     et_location.text.isNullOrEmpty() -> {
                         Toast.makeText(this, "رجاء أدخل العنوان", Toast.LENGTH_SHORT).show()
                     }
@@ -540,15 +494,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                     et_owner_tel.text.isNullOrEmpty() && et_logger_tel.text.isNullOrEmpty() -> {
                         Toast.makeText(this, "رجاء أدخل رقم الهاتف", Toast.LENGTH_SHORT).show()
                     }
-
-
-
-
                     else -> {
-                        val defaultImage = ContentResolver.SCHEME_ANDROID_RESOURCE +"://" +
-                                resources.getResourcePackageName(R.drawable.add_screen_image_placeholder) + '/' +
-                                resources.getResourceTypeName(R.drawable.add_screen_image_placeholder) + '/' +
-                                resources.getResourceEntryName(R.drawable.add_screen_image_placeholder)
                         val happyPlaceModel = HappyPlaceModel(
                             if (mHappyPlaceDetails == null) 0 else mHappyPlaceDetails!!.id,
                             et_date.text.toString(),
@@ -622,26 +568,26 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 roomNoAdapter.setOnClickListener(object: DialogAdapter.OnClickListener{
                     override fun onClick(position: Int) {
                         if (roomNoList[position] == OTHER_ROOM_N0){
-                            OthersDialog.tv_other_dialog_title.text =
+                            othersDialog.tv_other_dialog_title.text =
                                 resources.getString(R.string.other_dialog_title_room_no)
-                            OthersDialog.tv_other_dialog_cancel.setOnClickListener {
-                                OthersDialog.dismiss()
+                            othersDialog.tv_other_dialog_cancel.setOnClickListener {
+                                othersDialog.dismiss()
                                 et_roomNo.text?.clear()
                             }
-                            OthersDialog.tv_other_dialog_ok.setOnClickListener {
-                                if (OthersDialog.et_other_dialog.text.isNullOrEmpty()) {
+                            othersDialog.tv_other_dialog_ok.setOnClickListener {
+                                if (othersDialog.et_other_dialog.text.isNullOrEmpty()) {
                                     Toast.makeText(
                                         this@AddEstateActivity,
                                         "رجاءً أدخل عدد الغرف",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 } else {
-                                    et_roomNo.text = OthersDialog.et_other_dialog.text
-                                    OthersDialog.dismiss()
+                                    et_roomNo.text = othersDialog.et_other_dialog.text
+                                    othersDialog.dismiss()
                                 }
                             }
-                            OthersDialog.et_other_dialog.text?.clear()
-                            OthersDialog.show()
+                            othersDialog.et_other_dialog.text?.clear()
+                            othersDialog.show()
                         }else {
                             et_roomNo.setText(roomNoList[position])
                         }
@@ -686,27 +632,27 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                         }
                         selectDialog.dismiss()
                         if (furnitureList[position] == PARTIAL_FURNITURE) {
-                            OthersDialog.tv_other_dialog_title.text =
+                            othersDialog.tv_other_dialog_title.text =
                                 resources.getString(R.string.other_dialog_title_furniture)
-                            OthersDialog.tv_other_dialog_cancel.setOnClickListener {
-                                OthersDialog.dismiss()
+                            othersDialog.tv_other_dialog_cancel.setOnClickListener {
+                                othersDialog.dismiss()
                                 et_furniture.text?.clear()
                             }
-                            OthersDialog.tv_other_dialog_ok.setOnClickListener {
-                                if (OthersDialog.et_other_dialog.text.isNullOrEmpty()) {
+                            othersDialog.tv_other_dialog_ok.setOnClickListener {
+                                if (othersDialog.et_other_dialog.text.isNullOrEmpty()) {
                                     Toast.makeText(
                                         this@AddEstateActivity,
                                         "رجاءً أدخل الفرش",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 } else {
-                                    partialFurnitureItems = OthersDialog.et_other_dialog.text.toString()
+                                    partialFurnitureItems = othersDialog.et_other_dialog.text.toString()
                                     et_furniture.append(": $partialFurnitureItems")
-                                    OthersDialog.dismiss()
+                                    othersDialog.dismiss()
                                 }
                             }
-                            OthersDialog.et_other_dialog.setText(partialFurnitureItems)
-                            OthersDialog.show()
+                            othersDialog.et_other_dialog.setText(partialFurnitureItems)
+                            othersDialog.show()
                         }
                     }
                 })
@@ -752,31 +698,31 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 loggerTypeAdapter.setOnClickListener(object: DialogAdapter.OnClickListener{
                     override fun onClick(position: Int) {
                         loggerType = loggerTypeList[position]
-                            et_logger_type.setText(loggerTypeList[position])
-                            selectDialog.dismiss()
+                        et_logger_type.setText(loggerTypeList[position])
+                        selectDialog.dismiss()
                         if (loggerTypeList[position] != OWNER) {
-                            OthersDialog.tv_other_dialog_title.text =
+                            othersDialog.tv_other_dialog_title.text =
                                 resources.getString(R.string.other_dialog_title_name)
-                            OthersDialog.tv_other_dialog_cancel.setOnClickListener {
-                                OthersDialog.dismiss()
+                            othersDialog.tv_other_dialog_cancel.setOnClickListener {
+                                othersDialog.dismiss()
                                 et_logger_type.text?.clear()
                             }
-                            OthersDialog.tv_other_dialog_ok.setOnClickListener {
-                                if (OthersDialog.et_other_dialog.text.isNullOrEmpty()) {
+                            othersDialog.tv_other_dialog_ok.setOnClickListener {
+                                if (othersDialog.et_other_dialog.text.isNullOrEmpty()) {
                                     Toast.makeText(
                                         this@AddEstateActivity,
                                         "رجاءً أدخل الإسم",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 } else {
-                                    loggerName = OthersDialog.et_other_dialog.text.toString()
+                                    loggerName = othersDialog.et_other_dialog.text.toString()
 
                                     et_logger_type.append(": $loggerName")
-                                    OthersDialog.dismiss()
+                                    othersDialog.dismiss()
                                 }
                             }
-                            OthersDialog.et_other_dialog.setText(loggerName)
-                            OthersDialog.show()
+                            othersDialog.et_other_dialog.setText(loggerName)
+                            othersDialog.show()
                         }else{
                             loggerName = ""
                         }
@@ -805,27 +751,27 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                         et_owner_standards.setText(ownerStandardsList[position])
                         selectDialog.dismiss()
                         if (ownerStandardsList[position] == OTHER_STANDARDS) {
-                            OthersDialog.tv_other_dialog_title.text =
+                            othersDialog.tv_other_dialog_title.text =
                                 resources.getString(R.string.other_dialog_title_standard)
-                            OthersDialog.tv_other_dialog_cancel.setOnClickListener {
-                                OthersDialog.dismiss()
+                            othersDialog.tv_other_dialog_cancel.setOnClickListener {
+                                othersDialog.dismiss()
                                 et_owner_standards.text?.clear()
                             }
-                            OthersDialog.tv_other_dialog_ok.setOnClickListener {
-                                if (OthersDialog.et_other_dialog.text.isNullOrEmpty()) {
+                            othersDialog.tv_other_dialog_ok.setOnClickListener {
+                                if (othersDialog.et_other_dialog.text.isNullOrEmpty()) {
                                     Toast.makeText(
                                         this@AddEstateActivity,
                                         "رجاءً أدخل المعيار",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 } else {
-                                    otherStandard = OthersDialog.et_other_dialog.text.toString()
+                                    otherStandard = othersDialog.et_other_dialog.text.toString()
                                     et_owner_standards.append(": $otherStandard")
-                                    OthersDialog.dismiss()
+                                    othersDialog.dismiss()
                                 }
                             }
-                            OthersDialog.et_other_dialog.setText(otherStandard)
-                            OthersDialog.show()
+                            othersDialog.et_other_dialog.setText(otherStandard)
+                            othersDialog.show()
                         }
                     }
                 })
@@ -1058,7 +1004,16 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             object : PermissionListener{
                 override fun onPermissionGranted(report: PermissionGrantedResponse?) {
                     val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                    openCameraLauncher.launch(intent)
+
+                    val photoUri: Uri? = try {
+                        createAndSaveAccessibleUriForFile(createImageFile())
+                    } catch (ex: IOException) {
+                        null
+                    }
+                    photoUri?.let {
+                        intent.putExtra(MediaStore.EXTRA_OUTPUT,it)
+                        openCameraLauncher.launch(intent)
+                    }
                 }
 
                 override fun onPermissionDenied(report: PermissionDeniedResponse?) {
@@ -1128,12 +1083,13 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private  fun saveImageToInternalStorage(bitmap: Bitmap):Uri{
         var result: Uri
         //withContext(Dispatchers.IO) {}
-            val wrapper = ContextWrapper(applicationContext)
-            val path = wrapper.getDir(IMAGE_DIRECTORY, Context.MODE_PRIVATE)
-            val file = File(path, "${UUID.randomUUID()}.jpg")
+        //val bitmap = Bitmap.createScaledBitmap(bitmap, bitmap.width/3, bitmap.height/3, true)
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss",Locale.ENGLISH).format(Date())
+        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString()
+        val file = File(storageDir + File.separator + "Jasser_Estate_" + timeStamp + ".jpg")
             try {
                 val stream: OutputStream = FileOutputStream(file)
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
                 stream.flush()
                 stream.close()
                 result = Uri.parse(file.absolutePath)
@@ -1141,8 +1097,75 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 e.printStackTrace()
                 result = Uri.parse("")
             }
-
         return result
+    }
+
+
+    private fun copyGalleryImageToAppData(context: Context, pathFrom: Uri, pathTo: Uri?) {
+        context.contentResolver.openInputStream(pathFrom).use { inputStream: InputStream? ->
+            if (pathTo == null || inputStream == null) return
+            context.contentResolver.openOutputStream(pathTo).use { out ->
+                if (out == null) return
+                // Transfer bytes from in to out
+                val buf = ByteArray(1024)
+                var len: Int
+                while (inputStream.read(buf).also { len = it } > 0) {
+                    out.write(buf, 0, len)
+                }
+            }
+        }
+    }
+
+
+    private fun decodeUriToBitmap(PhotoUri: Uri): Bitmap? {
+        val photoPath = photoURI.toString()
+        // Get the dimensions of the View
+        val targetW: Int = iv_place_image.width
+        val targetH: Int = iv_place_image.height
+        var bmOptions = BitmapFactory.Options()
+        bmOptions .apply {
+            // Get the dimensions of the bitmap
+            inJustDecodeBounds = true
+            BitmapFactory.decodeFile(photoPath, bmOptions)
+            val photoW: Int = outWidth
+            val photoH: Int = outHeight
+            val scale = Math.max(outHeight/1000,outWidth/1000)
+            // Determine how much to scale down the image
+            val scaleFactor: Int = Math.max(1, Math.min(photoW / targetW, photoH / targetH))
+            // Decode the image file into a Bitmap sized to fill the View
+            inJustDecodeBounds = false
+            inSampleSize = scaleFactor
+            inPurgeable = true
+        }
+        return BitmapFactory.decodeFile(photoPath, bmOptions)
+        }
+
+
+    private fun addImageToArray(uri: Uri){
+        if (saveImageToInternalStorage[0].toString() == defaultImage) {
+            saveImageToInternalStorage.remove(Uri.parse(defaultImage))
+        }
+        saveImageToInternalStorage.add(uri)
+    }
+
+    private fun createAndSaveAccessibleUriForFile(file: File): Uri {
+        return file.let {
+            FileProvider.getUriForFile(
+                this@AddEstateActivity,
+                "com.othman.jaserestate.fileProvider",
+                it
+            ).apply { addImageToArray(this) }
+        }
+
+
+    }
+
+    private fun createImageFile(): File {
+        // Create an image file name
+        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss_SSS",Locale.ENGLISH).format(Date())
+        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString()
+        return File(storageDir + File.separator +
+                "Jasser_Estate_" + timeStamp + ".jpg")
     }
 
     //object for constants

@@ -7,7 +7,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.othman.jaserestate.R
+import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.item_images.view.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ImagesAdapter(private val context: Context, private val imageList: List<Uri>):RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 

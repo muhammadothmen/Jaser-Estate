@@ -87,6 +87,7 @@ class EstateDetailActivity : AppCompatActivity() {
 
         rvDetailImages.layoutManager = LinearLayoutManager(this)
         rvDetailImages.setHasFixedSize(true)
+        
 
         imagesAdapter = ImagesAdapter(this, model?.images!!)
         rvDetailImages.adapter = imagesAdapter

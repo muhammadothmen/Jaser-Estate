@@ -10,6 +10,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -53,6 +54,7 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra(OFFER_OR_DEMAND,offerOrDemand)
             openAddHappyPlaceActivity.launch(intent)
         }
+        lifecycleScope
 
         //set the search view
         placesSearch.findViewById<ImageView>(androidx.appcompat.R.id.search_mag_icon
