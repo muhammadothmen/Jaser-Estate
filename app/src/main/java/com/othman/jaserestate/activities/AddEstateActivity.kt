@@ -7,6 +7,8 @@ import android.app.Dialog
 import android.content.*
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -54,7 +56,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
 
     private var floorHousesNo = 1
     private var cal = Calendar.getInstance()
-    private var saveImageToInternalStorage = ArrayList<Uri>()
+    private var imagesList = ArrayList<Uri>()
+    private var temporaryImageList = ArrayList<Uri>()
     private var mLatitude : Double = 0.0
     private var mLongitude: Double = 0.0
     private var mHappyPlaceDetails :HappyPlaceModel? = null
@@ -107,8 +110,9 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var betPriceTypeAdapter: DialogAdapter
     private lateinit var priceDialog: Dialog
     private lateinit var defaultImage: String
-    lateinit var currentPhotoPath: String
-    lateinit var photoURI: Uri
+    private lateinit var cameraPhotoPath: String
+    private lateinit var cameraPhotoUri: Uri
+    //lateinit var photoURI: Uri
 
 
     private val openGalleryLauncher: ActivityResultLauncher<Intent> =
@@ -116,21 +120,19 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             if (result.resultCode == RESULT_OK && result.data != null) {
                 try {
                     if (result.data?.data != null) {
-                        val photoUri = createAndSaveAccessibleUriForFile(createImageFile())
-                        copyGalleryImageToAppData(this@AddEstateActivity,result.data!!.data!!,photoUri)
+                        saveGalleryImage(result.data!!.data!!)
                     }else if (result.data?.clipData != null){
                         val count = result.data?.clipData?.itemCount
                         for (i in 0 until count!!) {
-                            val photoUri = createAndSaveAccessibleUriForFile(createImageFile())
-                            copyGalleryImageToAppData(this@AddEstateActivity,result.data?.clipData?.getItemAt(i)?.uri!!,photoUri)
-                            if (saveImageToInternalStorage.size >= 10){
+                            saveGalleryImage(result.data?.clipData?.getItemAt(i)?.uri!!)
+                            if (imagesList.size >= 10){
                                 break
                             }
-                                Log.e("saved image", "path: ${saveImageToInternalStorage[i]}")
+                                Log.e("saved image", "path: ${imagesList[i]}")
                         }
                     }
                     imagesAdapter.notifyDataSetChanged()
-                }catch (e: IOException){
+                }catch (e: Exception){
                     e.printStackTrace()
                     Toast.makeText(this@AddEstateActivity,
                         "Oops, Failed",
@@ -143,6 +145,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private val openCameraLauncher: ActivityResultLauncher<Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK ) {
+                resizeAndSaveImage(cameraPhotoPath,cameraPhotoUri)
                 imagesAdapter.notifyDataSetChanged()
             }
         }
@@ -186,7 +189,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 resources.getResourceTypeName(R.drawable.add_screen_image_placeholder) + '/' +
                 resources.getResourceEntryName(R.drawable.add_screen_image_placeholder)
         if (mHappyPlaceDetails == null){
-        saveImageToInternalStorage.add(Uri.parse(defaultImage))
+        imagesList.add(Uri.parse(defaultImage))
         }
 
         //radio button set
@@ -299,8 +302,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             et_rent_duration.setText(mHappyPlaceDetails!!.rentDuration)
             et_positives.setText(mHappyPlaceDetails!!.positives)
             et_negatives.setText(mHappyPlaceDetails!!.negatives)
-            saveImageToInternalStorage = mHappyPlaceDetails!!.images!!
-            Log.e("hplist","${saveImageToInternalStorage}")
+            imagesList = mHappyPlaceDetails!!.images!!
+            Log.e("hplist","${imagesList}")
 
             btn_save.text = "تعديل"
         }
@@ -422,19 +425,23 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         rvAddImages.layoutManager = LinearLayoutManager(this)
         rvAddImages.setHasFixedSize(true)
 
-        imagesAdapter = ImagesAdapter(this, saveImageToInternalStorage)
+        imagesAdapter = ImagesAdapter(this, imagesList)
         rvAddImages.adapter = imagesAdapter
 
         val deleteSwipeToDelete = object: SwipeToDeleteCallback(this){
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                if (saveImageToInternalStorage.size > 1) {
-                    saveImageToInternalStorage.removeAt(viewHolder.adapterPosition)
+                if (imagesList.size > 1) {
+                    deleteFile(imagesList[viewHolder.adapterPosition])
+                    imagesList.removeAt(viewHolder.adapterPosition)
+                    temporaryImageList.removeAt(viewHolder.adapterPosition)
                     imagesAdapter.notifyItemRemoved(viewHolder.adapterPosition)
-                    imagesAdapter.notifyDataSetChanged()
                 }else{
-                    saveImageToInternalStorage[0] = Uri.parse(defaultImage)
+                    if (imagesList[viewHolder.adapterPosition] != Uri.parse(defaultImage)) {
+                        deleteFile(imagesList[viewHolder.adapterPosition])
+                        temporaryImageList.removeAt(viewHolder.adapterPosition)
+                    }
+                    imagesList[0] = Uri.parse(defaultImage)
                     imagesAdapter.notifyItemRemoved(viewHolder.adapterPosition)
-                    imagesAdapter.notifyDataSetChanged()
                 }
             }
         }
@@ -457,7 +464,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 ).show()
             }
             R.id.tv_add_image -> {
-                if (saveImageToInternalStorage.size < 10){
+                if (imagesList.size < 10){
                 val pictureDialog = AlertDialog.Builder(this)
                 pictureDialog.setTitle("Select Action")
                 val pictureDialogItems = arrayOf("Select photo from Gallery" ,"Capture photo from camera")
@@ -531,7 +538,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                             "",
                             "",
                             "",
-                            saveImageToInternalStorage
+                            imagesList
                             )
                         val dbHandler = DatabaseHandler(this)
                         if (mHappyPlaceDetails == null){
@@ -1005,15 +1012,14 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 override fun onPermissionGranted(report: PermissionGrantedResponse?) {
                     val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
-                    val photoUri: Uri? = try {
-                        createAndSaveAccessibleUriForFile(createImageFile())
-                    } catch (ex: IOException) {
-                        null
-                    }
-                    photoUri?.let {
+                    val file = createImageFile()
+                    cameraPhotoPath = file.absolutePath
+                    cameraPhotoUri = createAccessibleUriForFile(file)
+                    cameraPhotoUri.let {
                         intent.putExtra(MediaStore.EXTRA_OUTPUT,it)
                         openCameraLauncher.launch(intent)
                     }
+
                 }
 
                 override fun onPermissionDenied(report: PermissionDeniedResponse?) {
@@ -1087,16 +1093,16 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss",Locale.ENGLISH).format(Date())
         val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString()
         val file = File(storageDir + File.separator + "Jasser_Estate_" + timeStamp + ".jpg")
-            try {
-                val stream: OutputStream = FileOutputStream(file)
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                stream.flush()
-                stream.close()
-                result = Uri.parse(file.absolutePath)
-            } catch (e: IOException) {
-                e.printStackTrace()
-                result = Uri.parse("")
-            }
+        result = try {
+            val stream: OutputStream = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+            stream.flush()
+            stream.close()
+            Uri.parse(file.absolutePath)
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Uri.parse("")
+        }
         return result
     }
 
@@ -1116,12 +1122,15 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    private fun deleteFile(uri: Uri){
+        val deleted = contentResolver.delete(uri, null, null)
+        Log.e("Jasser",deleted.toString())
+    }
 
-    private fun decodeUriToBitmap(PhotoUri: Uri): Bitmap? {
-        val photoPath = photoURI.toString()
+    private fun resizeAndSaveImages(photoPath: String, uriToDelete: Uri): Uri? {
         // Get the dimensions of the View
-        val targetW: Int = iv_place_image.width
-        val targetH: Int = iv_place_image.height
+       // val targetW: Int = iv_image.width
+       // val targetH: Int = iv_image.height
         var bmOptions = BitmapFactory.Options()
         bmOptions .apply {
             // Get the dimensions of the bitmap
@@ -1131,30 +1140,111 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             val photoH: Int = outHeight
             val scale = Math.max(outHeight/1000,outWidth/1000)
             // Determine how much to scale down the image
-            val scaleFactor: Int = Math.max(1, Math.min(photoW / targetW, photoH / targetH))
+           // val scaleFactor: Int = Math.max(1, Math.min(photoW / targetW, photoH / targetH))
             // Decode the image file into a Bitmap sized to fill the View
             inJustDecodeBounds = false
-            inSampleSize = scaleFactor
-            inPurgeable = true
+            inSampleSize = scale
         }
-        return BitmapFactory.decodeFile(photoPath, bmOptions)
+        return BitmapFactory.decodeFile(photoPath, bmOptions)?.let { bitmap ->
+            try {
+                val file = createImageFile()
+                val stream: OutputStream = FileOutputStream(file)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                stream.flush()
+                stream.close()
+                createAccessibleUriForFile(file).apply {
+                    addImageToArray(this)
+                    deleteFile(uriToDelete)
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                Uri.parse("")
+            }
         }
+    }
+
+    private fun resizeAndSaveImage(photoPath: String, uriToDelete: Uri): Uri? {
+        // Get the dimensions of the View
+        // val targetW: Int = iv_image.width
+        // val targetH: Int = iv_image.height
+        var scaledBitmap:Bitmap? = null
+        val bmOptions = BitmapFactory.Options()
+        bmOptions .apply {
+            // Get the dimensions of the bitmap
+            inJustDecodeBounds = true
+            scaledBitmap = BitmapFactory.decodeFile(photoPath, bmOptions)
+            val photoW: Int = outWidth
+            val photoH: Int = outHeight
+            val scale = Math.max(outHeight/1000,outWidth/1000)
+            // Determine how much to scale down the image
+            // val scaleFactor: Int = Math.max(1, Math.min(photoW / targetW, photoH / targetH))
+            // Decode the image file into a Bitmap sized to fill the View
+            inJustDecodeBounds = false
+            inSampleSize = scale
+        }
+        val exif =  ExifInterface(photoPath)
+        val orientation: Int = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, 0)
+        Log.d("Jasser", "Exif: $orientation");
+        val matrix = Matrix()
+        when (orientation) {
+            6 -> {
+                matrix.postRotate(90f)
+                Log.d("Jasser", "Exif: $orientation")
+            }
+            3->  {
+                matrix.postRotate(180f)
+                Log.d("Jasser", "Exif: $orientation")
+            }
+            8-> {
+                matrix.postRotate(270f)
+                Log.d("Jasser", "Exif: $orientation")
+            }
+        }
+
+        return BitmapFactory.decodeFile(photoPath, bmOptions)?.let { bitmap ->
+            try {
+                val file = createImageFile()
+                val stream: OutputStream = FileOutputStream(file)
+                scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0,
+                    bitmap.width, bitmap.height, matrix, true)
+                scaledBitmap?.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                stream.flush()
+                stream.close()
+                createAccessibleUriForFile(file).apply {
+                    addImageToArray(this)
+                    deleteFile(uriToDelete)
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                Uri.parse("")
+            }
+        }
+    }
+
+    private fun saveGalleryImage(sourceUri: Uri){
+        val file = createImageFile()
+        val photoPath = file.absolutePath
+        val photoUri = createAccessibleUriForFile(file)
+        copyGalleryImageToAppData(this@AddEstateActivity,sourceUri,photoUri)
+        resizeAndSaveImage(photoPath,photoUri)
+    }
 
 
     private fun addImageToArray(uri: Uri){
-        if (saveImageToInternalStorage[0].toString() == defaultImage) {
-            saveImageToInternalStorage.remove(Uri.parse(defaultImage))
+        if (imagesList[0].toString() == defaultImage) {
+            imagesList.remove(Uri.parse(defaultImage))
         }
-        saveImageToInternalStorage.add(uri)
+        imagesList.add(uri)
+        temporaryImageList.add(uri)
     }
 
-    private fun createAndSaveAccessibleUriForFile(file: File): Uri {
+    private fun createAccessibleUriForFile(file: File): Uri {
         return file.let {
             FileProvider.getUriForFile(
                 this@AddEstateActivity,
                 "com.othman.jaserestate.fileProvider",
                 it
-            ).apply { addImageToArray(this) }
+            )
         }
 
 
@@ -1166,6 +1256,14 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString()
         return File(storageDir + File.separator +
                 "Jasser_Estate_" + timeStamp + ".jpg")
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+            for (image in temporaryImageList) {
+                deleteFile(image)
+            }
+
     }
 
     //object for constants
