@@ -119,7 +119,8 @@
                 android:layout_marginTop="@dimen/add_screen_til_marginTop"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/til_location">
+                app:layout_constraintTop_toBottomOf="@id/til_location"
+                >
 
                 <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/et_roomNo"

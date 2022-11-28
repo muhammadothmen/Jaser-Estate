@@ -1,18 +1,27 @@
 package com.othman.jaserestate.activities
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
+import android.os.StrictMode
+import android.os.StrictMode.VmPolicy
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.othman.jaserestate.R
 import com.othman.jaserestate.adapters.ImagesAdapter
 import com.othman.jaserestate.models.HappyPlaceModel
 import kotlinx.android.synthetic.main.activity_estate_detail.*
+import kotlinx.android.synthetic.main.activity_estate_detail.view.*
+
 
 class EstateDetailActivity : AppCompatActivity() {
     private var model:HappyPlaceModel? = null
     private lateinit var imagesAdapter :ImagesAdapter
+    private var estateSharingText = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,9 +30,13 @@ class EstateDetailActivity : AppCompatActivity() {
         setSupportActionBar(tbPlaceDetail)
         if (supportActionBar != null){
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
         }
         tbPlaceDetail.setNavigationOnClickListener {
             onBackPressed()
+        }
+        tbPlaceDetail.tv_share.setOnClickListener {
+            shareImage()
         }
 
         if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAILS)) {
@@ -31,6 +44,11 @@ class EstateDetailActivity : AppCompatActivity() {
         }
 
         showEstateDate()
+
+        btn_share.setOnClickListener {
+            shareImage()
+        }
+
 
     }
 
@@ -79,6 +97,24 @@ class EstateDetailActivity : AppCompatActivity() {
     private fun setTextViewString(value: String?, view:TextView) {
         if (value != "") {
             view.visibility = View.VISIBLE
+            when{
+                view == tv_type -> {
+                    estateSharingText += " منزل لل$value:  \n"
+                }
+                (view == tv_price) ||
+                        (view == tv_owner) ||
+                        (view == tv_logger_tel) ||
+                        (view == tv_owner_tel) ||
+                        (view == tv_date) ||
+                        (view == tv_priority) ||
+                        (view == tv_negatives) ||
+                        (view == tv_logger) -> {
+                    null
+                }
+                else -> {
+                    estateSharingText += "- ${view.text}: $value\n"
+                }
+            }
             view.append(": $value")
         }
     }
@@ -91,5 +127,17 @@ class EstateDetailActivity : AppCompatActivity() {
 
         imagesAdapter = ImagesAdapter(this, model?.images!!)
         rvDetailImages.adapter = imagesAdapter
+    }
+
+    private fun shareImage(){
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("label",estateSharingText)
+        clipboard.setPrimaryClip(clip)
+        val shareIntent = Intent(Intent.ACTION_VIEW)
+        shareIntent.action = Intent.ACTION_SEND_MULTIPLE
+        shareIntent.putExtra(Intent.EXTRA_STREAM, model?.images)
+        shareIntent.putExtra(Intent.EXTRA_TEXT,estateSharingText)
+        shareIntent.type = "*/*"
+        startActivity(Intent.createChooser(shareIntent, "مشاركة العقار"))
     }
 }

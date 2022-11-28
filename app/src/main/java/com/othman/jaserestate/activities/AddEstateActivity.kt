@@ -58,6 +58,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private var cal = Calendar.getInstance()
     private var imagesList = ArrayList<Uri>()
     private var temporaryImageList = ArrayList<Uri>()
+    private var toDeleteImageList = ArrayList<Uri>()
     private var mLatitude : Double = 0.0
     private var mLongitude: Double = 0.0
     private var mHappyPlaceDetails :HappyPlaceModel? = null
@@ -112,7 +113,6 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var defaultImage: String
     private lateinit var cameraPhotoPath: String
     private lateinit var cameraPhotoUri: Uri
-    //lateinit var photoURI: Uri
 
 
     private val openGalleryLauncher: ActivityResultLauncher<Intent> =
@@ -429,21 +429,22 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         rvAddImages.adapter = imagesAdapter
 
         val deleteSwipeToDelete = object: SwipeToDeleteCallback(this){
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                if (imagesList.size > 1) {
-                    deleteFile(imagesList[viewHolder.adapterPosition])
-                    imagesList.removeAt(viewHolder.adapterPosition)
-                    temporaryImageList.removeAt(viewHolder.adapterPosition)
-                    imagesAdapter.notifyItemRemoved(viewHolder.adapterPosition)
-                }else{
-                    if (imagesList[viewHolder.adapterPosition] != Uri.parse(defaultImage)) {
-                        deleteFile(imagesList[viewHolder.adapterPosition])
-                        temporaryImageList.removeAt(viewHolder.adapterPosition)
+                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+
+                    if (imagesList[0] != Uri.parse(defaultImage)){
+                        if (mHappyPlaceDetails == null) {
+                            deleteFile(imagesList[viewHolder.adapterPosition])
+                        }else{
+                            toDeleteImageList.add(imagesList[viewHolder.adapterPosition])
+                        }
+                        temporaryImageList.remove(imagesList[viewHolder.adapterPosition])
+                        imagesList.removeAt(viewHolder.adapterPosition)
+                        if (imagesList.size == 0){
+                            imagesList.add(Uri.parse(defaultImage))
+                        }
                     }
-                    imagesList[0] = Uri.parse(defaultImage)
                     imagesAdapter.notifyItemRemoved(viewHolder.adapterPosition)
                 }
-            }
         }
         val deleteItemTouchHelper = ItemTouchHelper(deleteSwipeToDelete)
         deleteItemTouchHelper.attachToRecyclerView(rvAddImages)
@@ -548,6 +549,9 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                             finish()
                         }
                         }else{
+                            for (image in toDeleteImageList){
+                                deleteFile(image)
+                            }
                             val updateHappyPlace = dbHandler.updateHappyPlace(happyPlaceModel)
                             if (updateHappyPlace > 0){
                                 setResult(RESULT_OK)
@@ -1122,7 +1126,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    private fun deleteFile(uri: Uri){
+    fun deleteFile(uri: Uri){
         val deleted = contentResolver.delete(uri, null, null)
         Log.e("Jasser",deleted.toString())
     }
@@ -1265,6 +1269,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             }
 
     }
+
+
 
     //object for constants
     companion object{

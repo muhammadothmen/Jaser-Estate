@@ -2,6 +2,7 @@ package com.othman.jaserestate.activities
 
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private var offerOrDemand = OFFER
     private var isDone = NOT_DONE
     private lateinit var placesAdapter: HappyPlaceAdapter
+    private var  getHappyPlacesList : ArrayList<HappyPlaceModel>? = null
 
 
     private val openAddHappyPlaceActivity: ActivityResultLauncher<Intent> =
@@ -94,14 +96,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun getHappyPlacesListFromLocalDB(){
         val dbHandler = DatabaseHandler(this)
-        val getHappyPlacesList : ArrayList<HappyPlaceModel> =
+        getHappyPlacesList  =
             dbHandler.getHappyPlacesList(offerOrDemand, isDone)
 
 
-        if (getHappyPlacesList.size > 0) {
+        if (getHappyPlacesList!!.size > 0) {
             rvHappyPlacesList.visibility = View.VISIBLE
             tvNoRecordsAvailable.visibility = View.GONE
-            setupHappyPlacesRecyclerView(getHappyPlacesList)
+            setupHappyPlacesRecyclerView(getHappyPlacesList!!)
         } else {
             rvHappyPlacesList.visibility = View.GONE
             tvNoRecordsAvailable.visibility = View.VISIBLE
@@ -160,6 +162,10 @@ class MainActivity : AppCompatActivity() {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val adapter = rvHappyPlacesList.adapter as HappyPlaceAdapter
                 if (offerOrDemand == HISTORY){
+                    val imageListToDelete = getHappyPlacesList?.get(viewHolder.adapterPosition)?.images!!
+                    for (image in imageListToDelete){
+                        deleteFile(image)
+                    }
                     adapter.removeAt(viewHolder.adapterPosition)
                 }else {
                     adapter.changeDoneSituation(viewHolder.adapterPosition, DONE)
@@ -169,6 +175,10 @@ class MainActivity : AppCompatActivity() {
         }
         val deleteItemTouchHelper = ItemTouchHelper(deleteSwipeToDelete)
         deleteItemTouchHelper.attachToRecyclerView(rvHappyPlacesList)
+    }
+    fun deleteFile(uri: Uri){
+        val deleted = contentResolver.delete(uri, null, null)
+        Log.e("Jasser",deleted.toString())
     }
 
     //object for constants

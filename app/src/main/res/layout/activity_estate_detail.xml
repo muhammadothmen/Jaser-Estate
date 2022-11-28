@@ -14,7 +14,19 @@
         android:theme="@style/CustomToolBarStyle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:layoutDirection="ltr">
+
+        <TextView
+            android:id="@+id/tv_share"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic__share_24"
+            android:layout_gravity="end"
+            android:layout_marginEnd="@dimen/add_screen_place_image_marginTop"
+            />
+    </androidx.appcompat.widget.Toolbar>
+
 
     <ScrollView
         android:id="@+id/sv_main"
@@ -422,21 +434,8 @@
                 android:visibility="gone"
                 />
 
-
-
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvDetailImages"
-                android:layout_width="match_parent"
-                android:layout_height="530dp"
-                tools:listitem="@layout/item_images"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_date"
-                />
-
             <Button
-                android:id="@+id/btn_view_on_map"
+                android:id="@+id/btn_share"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -447,15 +446,28 @@
                 android:gravity="center"
                 android:paddingTop="@dimen/detail_screen_btn_view_on_map_PaddingTopBottom"
                 android:paddingBottom="@dimen/detail_screen_btn_view_on_map_PaddingTopBottom"
-                android:text="@string/btn_text_view_on_map"
+                android:text="@string/btn_text_share"
                 android:textColor="@color/white_color"
                 android:textSize="@dimen/detail_screen_btn_view_on_map_text_size"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/rvDetailImages"
+                app:layout_constraintTop_toBottomOf="@+id/tv_date"
                 android:visibility="gone"
                 />
+
+
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvDetailImages"
+                android:layout_width="match_parent"
+                android:layout_height="530dp"
+                android:layout_marginTop="@dimen/detail_screen_location_marginTop"
+                tools:listitem="@layout/item_images"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/btn_share"
+                />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 

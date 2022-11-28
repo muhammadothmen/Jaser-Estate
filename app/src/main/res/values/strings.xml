@@ -59,5 +59,6 @@
     <string name="rb_text_history">السجل</string>
     <string name="edit_text_hint_type">النوع</string>
     <string name="rb_text_buy">شراء</string>
+    <string name="btn_text_share">مشاركة</string>
 
 </resources>
