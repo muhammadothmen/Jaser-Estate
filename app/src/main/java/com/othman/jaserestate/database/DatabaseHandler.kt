@@ -18,6 +18,7 @@ class DatabaseHandler(context: Context) :
         private const val DATABASE_VERSION = 1 // Database version
         private const val DATABASE_NAME = "EstateDatabase" // Database name
         private const val TABLE_HAPPY_PLACE = "EstateTable" // Table Name
+        private const val ENCODING_SETTING = "PRAGMA encoding ='windows-1256'"
 
         //All the Columns names
         private const val KEY_ID = "_id"
@@ -80,7 +81,7 @@ class DatabaseHandler(context: Context) :
                 "${KEY_LOCATION}  TEXT,"+
                 "${KEY_LATITUDE}  TEXT,"+
                 "${KEY_LONGITUDE}  TEXT,"+
-                "${KEY_AREA}  TEXT,"+
+                "${KEY_AREA}  INTEGER,"+
                 "${KEY_ROOM_NO}  TEXT,"+
                 "${KEY_DIRECTIONS}  TEXT,"+
                 "${KEY_HEIGHT}  TEXT,"+
@@ -88,8 +89,8 @@ class DatabaseHandler(context: Context) :
                 "${KEY_FLOOR_HOUSES_NO}  TEXT,"+
                 "${KEY_SITUATION}  TEXT,"+
                 "${KEY_FURNITURE}  TEXT,"+
-                "${KEY_FURNITURE_SITUATIONS}  TEXT,"+
                 "${KEY_PARTIAL_FURNITURE}  TEXT,"+
+                "${KEY_FURNITURE_SITUATIONS}  TEXT,"+
                 "${KEY_PRICE}  TEXT,"+
                 "${KEY_PRICE_TYPE}  TEXT,"+
                 "${KEY_LEGAL}  TEXT,"+
@@ -128,6 +129,11 @@ class DatabaseHandler(context: Context) :
         onCreate(db)
     }
 
+    override fun onOpen(db: SQLiteDatabase?) {
+        super.onOpen(db)
+        db?.execSQL(ENCODING_SETTING)
+    }
+
     /**
      * Function to insert a Happy Place details to SQLite Database.
      */
@@ -149,8 +155,8 @@ class DatabaseHandler(context: Context) :
         contentValues.put(KEY_FLOOR_HOUSES_NO, happyPlace.floorHousesNo)
         contentValues.put(KEY_SITUATION, happyPlace.situation)
         contentValues.put(KEY_FURNITURE, happyPlace.furniture)
-        contentValues.put(KEY_FURNITURE_SITUATIONS, happyPlace.furnitureSituation)
         contentValues.put(KEY_PARTIAL_FURNITURE, happyPlace.partialFurniture)
+        contentValues.put(KEY_FURNITURE_SITUATIONS, happyPlace.furnitureSituation)
         contentValues.put(KEY_PRICE, happyPlace.price)
         contentValues.put(KEY_PRICE_TYPE, happyPlace.priceType)
         contentValues.put(KEY_LEGAL, happyPlace.legal)
@@ -191,24 +197,18 @@ class DatabaseHandler(context: Context) :
      * Function to read all the list of Happy Places data which are inserted.
      */
     @SuppressLint("Range")
-    fun getHappyPlacesList(offerOrDemand: Int, isDone: Int): ArrayList<HappyPlaceModel> {
+    fun getHappyPlacesList(mQuery: String): ArrayList<HappyPlaceModel> {
 
         // A list is initialize using the data model class in which we will add the values from cursor.
         val happyPlaceList: ArrayList<HappyPlaceModel> = ArrayList()
 
-        var selectQuery = "SELECT  * FROM $TABLE_HAPPY_PLACE WHERE offerOrDemand=${offerOrDemand} and isDone = $isDone"
-
-        if (offerOrDemand == 0)
-        {
-            selectQuery = "SELECT  * FROM $TABLE_HAPPY_PLACE WHERE isDone = $isDone"
-        }
+        //var selectQuery = "select  * from $TABLE_HAPPY_PLACE" + " where $KEY_AREA * 10 between (10 * 10) and (580 * 10) " + "and $KEY_PRICE * 10 between (10 * 10) and (580 * 10)"
+        val selectQuery = "select  * from $TABLE_HAPPY_PLACE $mQuery"
         val db = this.readableDatabase
-
         try {
-            val cursor: Cursor = db.rawQuery(selectQuery, null)
+            val cursor: Cursor = db.rawQuery(selectQuery,null)
             if (cursor.moveToFirst()) {
                 do {
-
                     val imagesNo = cursor.getInt(cursor.getColumnIndex(KEY_IMAGES_NO))
                     val imagesList = ArrayList<Uri>()
                     for (image in 0 until imagesNo){
@@ -231,8 +231,8 @@ class DatabaseHandler(context: Context) :
                         cursor.getInt(cursor.getColumnIndex(KEY_FLOOR_HOUSES_NO)),
                         cursor.getString(cursor.getColumnIndex(KEY_SITUATION)),
                         cursor.getString(cursor.getColumnIndex(KEY_FURNITURE)),
-                        cursor.getString(cursor.getColumnIndex(KEY_FURNITURE_SITUATIONS)),
                         cursor.getString(cursor.getColumnIndex(KEY_PARTIAL_FURNITURE)),
+                        cursor.getString(cursor.getColumnIndex(KEY_FURNITURE_SITUATIONS)),
                         cursor.getFloat(cursor.getColumnIndex(KEY_PRICE)),
                         cursor.getString(cursor.getColumnIndex(KEY_PRICE_TYPE)),
                         cursor.getString(cursor.getColumnIndex(KEY_LEGAL)),
@@ -287,8 +287,8 @@ class DatabaseHandler(context: Context) :
         contentValues.put(KEY_FLOOR_HOUSES_NO, happyPlace.floorHousesNo)
         contentValues.put(KEY_SITUATION, happyPlace.situation)
         contentValues.put(KEY_FURNITURE, happyPlace.furniture)
-        contentValues.put(KEY_FURNITURE_SITUATIONS, happyPlace.furnitureSituation)
         contentValues.put(KEY_PARTIAL_FURNITURE, happyPlace.partialFurniture)
+        contentValues.put(KEY_FURNITURE_SITUATIONS, happyPlace.furnitureSituation)
         contentValues.put(KEY_PRICE, happyPlace.price)
         contentValues.put(KEY_PRICE_TYPE, happyPlace.priceType)
         contentValues.put(KEY_LEGAL, happyPlace.legal)

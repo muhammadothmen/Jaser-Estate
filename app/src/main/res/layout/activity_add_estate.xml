@@ -98,7 +98,8 @@
                 android:layout_marginTop="@dimen/add_screen_til_marginTop"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/rgTypes">
+                app:layout_constraintTop_toBottomOf="@+id/rgTypes"
+                >
 
                 <androidx.appcompat.widget.AppCompatEditText
                     android:id="@+id/et_location"
@@ -109,7 +110,8 @@
                     android:gravity="right"
                     android:textColor="@color/primary_text_color"
                     android:textColorHint="@color/secondary_text_color"
-                    android:textSize="@dimen/edit_text_text_size" />
+                    android:textSize="@dimen/edit_text_text_size"
+                    />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout

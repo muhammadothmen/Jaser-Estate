@@ -3,7 +3,6 @@ package com.othman.jaserestate.adapters
 import android.content.Context
 import android.content.Intent
 import android.content.*
-import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -21,7 +20,7 @@ import kotlinx.android.synthetic.main.activity_add_estate.*
 import kotlinx.android.synthetic.main.item_happy_place.view.*
 import java.util.*
 
-open class HappyPlaceAdapter(
+open class placeAdapter(
     private val context: Context,
     private var list: ArrayList<HappyPlaceModel>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>(), Filterable {

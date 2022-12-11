@@ -8,7 +8,7 @@ import android.content.*
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
-import android.media.ExifInterface
+import android.support.media.ExifInterface
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -161,7 +161,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             supportActionBar?.title = "إضافة عقار"
         }
         tbAddPlace.setNavigationOnClickListener {
-            onBackPressed()
+            onBackPressedDispatcher.onBackPressed()
         }
 
         //get offerOrDemand form main Activity
@@ -179,7 +179,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         }
 
         if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAILS)) {
-            mHappyPlaceDetails = intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS)
+            mHappyPlaceDetails =  intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS)
         }
 
         selectDialogInit()
@@ -293,7 +293,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             loggerName = mHappyPlaceDetails!!.loggerName!!
             loggerType = mHappyPlaceDetails!!.loggerType!!
             et_logger_type.setText("${mHappyPlaceDetails!!.loggerType}")
-            if (!loggerName.isNullOrEmpty()){
+            if (loggerName.isNotEmpty()){
                 et_logger_type.append(": $loggerName")
             }
             et_owner_tel.setText(mHappyPlaceDetails!!.ownerTel)
@@ -467,8 +467,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
             R.id.tv_add_image -> {
                 if (imagesList.size < 10){
                 val pictureDialog = AlertDialog.Builder(this)
-                pictureDialog.setTitle("Select Action")
-                val pictureDialogItems = arrayOf("Select photo from Gallery" ,"Capture photo from camera")
+                //pictureDialog.setTitle("اختر الطريقة")
+                val pictureDialogItems = arrayOf("اختر من المعرض" ,"التقط عن طريق الكاميرا")
                 pictureDialog.setItems(pictureDialogItems){
                     dialog, which ->
                     when(which){
@@ -1090,27 +1090,6 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         et_date.setText(sdf.format(cal.time).toString())
     }
 
-    private  fun saveImageToInternalStorage(bitmap: Bitmap):Uri{
-        var result: Uri
-        //withContext(Dispatchers.IO) {}
-        //val bitmap = Bitmap.createScaledBitmap(bitmap, bitmap.width/3, bitmap.height/3, true)
-        val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss",Locale.ENGLISH).format(Date())
-        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES).toString()
-        val file = File(storageDir + File.separator + "Jasser_Estate_" + timeStamp + ".jpg")
-        result = try {
-            val stream: OutputStream = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-            stream.flush()
-            stream.close()
-            Uri.parse(file.absolutePath)
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Uri.parse("")
-        }
-        return result
-    }
-
-
     private fun copyGalleryImageToAppData(context: Context, pathFrom: Uri, pathTo: Uri?) {
         context.contentResolver.openInputStream(pathFrom).use { inputStream: InputStream? ->
             if (pathTo == null || inputStream == null) return
@@ -1129,42 +1108,6 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     fun deleteFile(uri: Uri){
         val deleted = contentResolver.delete(uri, null, null)
         Log.e("Jasser",deleted.toString())
-    }
-
-    private fun resizeAndSaveImages(photoPath: String, uriToDelete: Uri): Uri? {
-        // Get the dimensions of the View
-       // val targetW: Int = iv_image.width
-       // val targetH: Int = iv_image.height
-        var bmOptions = BitmapFactory.Options()
-        bmOptions .apply {
-            // Get the dimensions of the bitmap
-            inJustDecodeBounds = true
-            BitmapFactory.decodeFile(photoPath, bmOptions)
-            val photoW: Int = outWidth
-            val photoH: Int = outHeight
-            val scale = Math.max(outHeight/1000,outWidth/1000)
-            // Determine how much to scale down the image
-           // val scaleFactor: Int = Math.max(1, Math.min(photoW / targetW, photoH / targetH))
-            // Decode the image file into a Bitmap sized to fill the View
-            inJustDecodeBounds = false
-            inSampleSize = scale
-        }
-        return BitmapFactory.decodeFile(photoPath, bmOptions)?.let { bitmap ->
-            try {
-                val file = createImageFile()
-                val stream: OutputStream = FileOutputStream(file)
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                stream.flush()
-                stream.close()
-                createAccessibleUriForFile(file).apply {
-                    addImageToArray(this)
-                    deleteFile(uriToDelete)
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-                Uri.parse("")
-            }
-        }
     }
 
     private fun resizeAndSaveImage(photoPath: String, uriToDelete: Uri): Uri? {
@@ -1233,7 +1176,6 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         resizeAndSaveImage(photoPath,photoUri)
     }
 
-
     private fun addImageToArray(uri: Uri){
         if (imagesList[0].toString() == defaultImage) {
             imagesList.remove(Uri.parse(defaultImage))
@@ -1279,93 +1221,93 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         private const val IS_DONE = 1
         private const val IS_NOT_DONE = 0
         //types
-        private const val SALE = "بيع"
-        private const val RENT = "آجار"
-        private const val BET = "رهنية"
-        private const val BUY = "شراء"
+        internal const val SALE = "بيع"
+        internal const val RENT = "آجار"
+        internal const val BET = "رهنية"
+        internal const val BUY = "شراء"
         //height list
-        private const val SECOND_UNDER_GROUND = "ثاني تحت الأرض"
-        private const val FIRST_UNDER_GROUND = "أول تحت الأرض"
-        private const val SAME_GROUND = "أرضي"
-        private const val HANGING = "معلق"
-        private const val FIRST = "أول"
-        private const val SECOND = "ثاني"
-        private const val THIRD = "ثالث"
-        private const val FOURTH = "رابع"
-        private const val FIFTH = "خامس"
-        private const val SIXTH = "سادس"
-        private const val SURFACE = "سطوح"
-        private const val GARDEN_UNDER_GROUND = "حديقة نزول"
-        private const val GARDEN_UPPER_GROUND = "حديقة فوق الأرض"
-        private const val GARDEN_SAME_GROUND = "حديقة أرضي"
+        internal const val SECOND_UNDER_GROUND = "ثاني تحت الأرض"
+        internal const val FIRST_UNDER_GROUND = "أول تحت الأرض"
+        internal const val SAME_GROUND = "أرضي"
+        internal const val HANGING = "معلق"
+        internal const val FIRST = "أول"
+        internal const val SECOND = "ثاني"
+        internal const val THIRD = "ثالث"
+        internal const val FOURTH = "رابع"
+        internal const val FIFTH = "خامس"
+        internal const val SIXTH = "سادس"
+        internal const val SURFACE = "سطوح"
+        internal const val GARDEN_UNDER_GROUND = "حديقة نزول"
+        internal const val GARDEN_UPPER_GROUND = "حديقة فوق الأرض"
+        internal const val GARDEN_SAME_GROUND = "حديقة أرضي"
         //roomNo list
-        private const val ONE_ROOM = "غرفة واحدة"
-        private const val ONE_R00M_WITH_SALON = "غرفة وصالون"
-        private const val TWO_ROOM_WITH_DISTRIBUTOR  = "غرفتين وموزع"
-        private const val TWO_R00M_WITH_SALON = "غرفتين وصالون"
-        private const val THREE_ROOM_WITH_DISTRIBUTOR  = "ثلاث غرف وموزع"
-        private const val THREE_R00M_WITH_SALON = "ثلاث غرف وصالون"
-        private const val FOUR_ROOM_WITH_DISTRIBUTOR  = "أربع غرف وموزع"
-        private const val FOUR_R00M_WITH_SALON = "أربع غرف وصالون"
-        private const val FIFE_ROOM_WITH_DISTRIBUTOR  = "خمس غرف وموزع"
-        private const val FIFE_R00M_WITH_SALON = "خمس غرف وصالون"
-        private const val SIX_ROOM_WITH_DISTRIBUTOR  = "ست غرف وموزع"
-        private const val SIX_R00M_WITH_SALON = "ست غرف وصالون"
-        private const val SEVEN_ROOM_WITH_DISTRIBUTOR  = "سبع غرف وموزع"
-        private const val SEVEN_R00M_WITH_SALON = "سبع غرف وصالون"
-        private const val EIGHT_ROOM_WITH_DISTRIBUTOR  = "ثمان غرف وموزع"
-        private const val EIGHT_ROOM_WITH_SALON  = "ثمان غرف وصالون"
-        private const val NINE_ROOM_WITH_DISTRIBUTOR  = "تسع غرف وموزع"
-        private const val NINE_ROOM_WITH_SALON  = "تسع غرف وصالون"
-        private const val OTHER_ROOM_N0 = "أخرى"
+        internal const val ONE_ROOM = "غرفة واحدة"
+        internal const val ONE_R00M_WITH_SALON = "غرفة وصالون"
+        internal const val TWO_ROOM_WITH_DISTRIBUTOR  = "غرفتين وموزع"
+        internal const val TWO_R00M_WITH_SALON = "غرفتين وصالون"
+        internal const val THREE_ROOM_WITH_DISTRIBUTOR  = "ثلاث غرف وموزع"
+        internal const val THREE_R00M_WITH_SALON = "ثلاث غرف وصالون"
+        internal const val FOUR_ROOM_WITH_DISTRIBUTOR  = "أربع غرف وموزع"
+        internal const val FOUR_R00M_WITH_SALON = "أربع غرف وصالون"
+        internal const val FIFE_ROOM_WITH_DISTRIBUTOR  = "خمس غرف وموزع"
+        internal const val FIFE_R00M_WITH_SALON = "خمس غرف وصالون"
+        internal const val SIX_ROOM_WITH_DISTRIBUTOR  = "ست غرف وموزع"
+        internal const val SIX_R00M_WITH_SALON = "ست غرف وصالون"
+        internal const val SEVEN_ROOM_WITH_DISTRIBUTOR  = "سبع غرف وموزع"
+        internal const val SEVEN_R00M_WITH_SALON = "سبع غرف وصالون"
+        internal const val EIGHT_ROOM_WITH_DISTRIBUTOR  = "ثمان غرف وموزع"
+        internal const val EIGHT_ROOM_WITH_SALON  = "ثمان غرف وصالون"
+        internal const val NINE_ROOM_WITH_DISTRIBUTOR  = "تسع غرف وموزع"
+        internal const val NINE_ROOM_WITH_SALON  = "تسع غرف وصالون"
+        internal const val OTHER_ROOM_N0 = "أخرى"
         //situation and furniture list
-        private const val SUPER_DELUXE  = "سوبر ديلوكس"
-        private const val DELUXE  = "ديلوكس"
-        private const val VERY_GOOD  = "جيد جداً"
-        private const val GOOD  = "جيد"
-        private const val MEDIUM  = "وسط"
-        private const val UNDER_MEDIUM  = "دون الوسط"
-        private const val FULL_MAINTENANCE  = "صيانة كاملة"
-        private const val NO_FURNITURE  = "غير مفروش"
-        private const val FULL_FURNITURE  = "فرش كامل"
+        internal const val SUPER_DELUXE  = "سوبر ديلوكس"
+        internal const val DELUXE  = "ديلوكس"
+        internal const val VERY_GOOD  = "جيد جداً"
+        internal const val GOOD  = "جيد"
+        internal const val MEDIUM  = "وسط"
+        internal const val UNDER_MEDIUM  = "دون الوسط"
+        internal const val FULL_MAINTENANCE  = "صيانة كاملة"
+        internal const val NO_FURNITURE  = "غير مفروش"
+        internal const val FULL_FURNITURE  = "فرش كامل"
         internal const val PARTIAL_FURNITURE  = "فرش جزئي"
-        private const val FULL_FURNITURE_ABLE_RENT_WITHOUT  = "فرش كامل مع إمكانية الآجار بدونه"
-        private const val PARTIAL_FURNITURE_ABLE_RENT_WITHOUT  = "فرش جزئي مع إمكانية الآجار بدونه"
+        internal const val FULL_FURNITURE_ABLE_RENT_WITHOUT  = "فرش كامل مع إمكانية الآجار بدونه"
+        internal const val PARTIAL_FURNITURE_ABLE_RENT_WITHOUT  = "فرش جزئي مع إمكانية الآجار بدونه"
 
 
         //front and back list
         private const val FRONT  = "أمامي"
         private const val BACK  = "خلفي"
         //directions list
-        private const val FULL  = "بلاطة كاملة: الاتجاهات الأربعة"
-        private const val HALF_EAST_NORTH_WEST  = "نصف بلاطة: شرقي-شمالي-غربي"
-        private const val HALF_EAST_SOUTH_WEST  = "نصف بلاطة: شرقي-قبلي-غربي"
-        private const val HALF_NORTH_WEST_SOUTH  = "نصف بلاطة: شمالي-غربي-قبلي"
-        private const val HALF_NORTH_EAST_SOUTH  = "نصف بلاطة: شمالي-شرقي-قبلي"
-        private const val CORNER_NORTH_EAST  = "زاوية: شمالي-شرقي"
-        private const val CORNER_NORTH_WEST  = "زاوية: شمالي-غربي"
-        private const val CORNER_SOUTH_EAST  = "زاوية: قبلي-شرقي"
-        private const val CORNER_SOUTH_WEST  = "زاوية: قبلي-غربي"
-        private const val PADDING_EAST_WEST  = "حشوة: غربي-شرقي"
-        private const val PADDING_NORTH_SOUTH  = "حشوة: شمالي-قبلي"
-        private const val NORTH  = "شمالي"
-        private const val SOUTH  = "قبلي"
-        private const val WEST  = "غربي"
-        private const val EAST  = "شرقي"
+        internal const val FULL  = "بلاطة كاملة: الاتجاهات الأربعة"
+        internal const val HALF_EAST_NORTH_WEST  = "نصف بلاطة: شرقي - شمالي - غربي"
+        internal const val HALF_EAST_SOUTH_WEST  = "نصف بلاطة: شرقي - قبلي - غربي"
+        internal const val HALF_NORTH_WEST_SOUTH  = "نصف بلاطة: شمالي - غربي - قبلي"
+        internal const val HALF_NORTH_EAST_SOUTH  = "نصف بلاطة: شمالي - شرقي - قبلي"
+        internal const val CORNER_NORTH_EAST  = "زاوية: شمالي - شرقي"
+        internal const val CORNER_NORTH_WEST  = "زاوية: شمالي - غربي"
+        internal const val CORNER_SOUTH_EAST  = "زاوية: قبلي - شرقي"
+        internal const val CORNER_SOUTH_WEST  = "زاوية: قبلي - غربي"
+        internal const val PADDING_EAST_WEST  = "حشوة: غربي - شرقي"
+        internal const val PADDING_NORTH_SOUTH  = "حشوة: شمالي - قبلي"
+        internal const val NORTH  = "شمالي"
+        internal const val SOUTH  = "قبلي"
+        internal const val WEST  = "غربي"
+        internal const val EAST  = "شرقي"
         //legal list
-        private const val CONTRACT  = "عقد"
-        private const val  COURT = "حكم محكمة"
-        private const val GREEN_STAMP  = "طابو أخضر"
+        internal const val CONTRACT  = "عقد"
+        internal const val  COURT = "حكم محكمة"
+        internal const val GREEN_STAMP  = "طابو أخضر"
         //is direct list
         private const val OWNER  = "المالك"
         private const val OFFICE  = "مكتب"
         private const val MOBILE_OFFICE  = "مكتب جوال"
 
         //priority
-        private const val IMPORTANT_URGENT  = "مستعجل وهام"
-        private const val IMPORTANT_NOT_URGENT  = "غير مستعجل وهام"
-        private const val NOT_IMPORTANT_URGENT  = "مستعجل وغير هام"
-        private const val NOT_IMPORTANT_NOT_URGENT  = "غير مستعجل وغير هام"
+        internal const val IMPORTANT_URGENT  = "مستعجل وهام"
+        internal const val IMPORTANT_NOT_URGENT  = "غير مستعجل وهام"
+        internal const val NOT_IMPORTANT_URGENT  = "مستعجل وغير هام"
+        internal const val NOT_IMPORTANT_NOT_URGENT  = "غير مستعجل وغير هام"
         //owner standards list
         private const val NULL  = "لا يوجد"
         private const val GROOMS_ONLY  = "عرسان حصراً"

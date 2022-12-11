@@ -1,17 +1,18 @@
 package com.othman.jaserestate.adapters
 
 import android.content.Context
+import android.content.Intent
+import android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
 import android.net.Uri
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.othman.jaserestate.R
-import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.item_images.view.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+
 
 class ImagesAdapter(private val context: Context, private val imageList: List<Uri>):RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
@@ -24,6 +25,17 @@ class ImagesAdapter(private val context: Context, private val imageList: List<Ur
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is MyViewHolder ){
             holder.itemView.iv_place_image.setImageURI(imageList[position])
+        }
+        holder.itemView.setOnClickListener {
+            try {
+                val openImageIntent = Intent(Intent.ACTION_VIEW)
+                openImageIntent.flags = FLAG_GRANT_READ_URI_PERMISSION
+                openImageIntent.setDataAndType(imageList[position],"image/*")
+                startActivity(context,openImageIntent,null)
+            }catch (e:Exception){
+                Log.e("Jasser",e.toString())
+            }
+
         }
     }
 

@@ -1,9 +1,7 @@
 package com.othman.jaserestate.activities
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
+import android.content.*
+import android.net.Uri
 import android.os.Bundle
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
@@ -22,6 +20,8 @@ class EstateDetailActivity : AppCompatActivity() {
     private var model:HappyPlaceModel? = null
     private lateinit var imagesAdapter :ImagesAdapter
     private var estateSharingText = ""
+    private lateinit var defaultImage: String
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,10 +45,18 @@ class EstateDetailActivity : AppCompatActivity() {
 
         showEstateDate()
 
-        btn_share.setOnClickListener {
-            shareImage()
-        }
 
+        defaultImage = ContentResolver.SCHEME_ANDROID_RESOURCE +"://" +
+                resources.getResourcePackageName(R.drawable.add_screen_image_placeholder) + '/' +
+                resources.getResourceTypeName(R.drawable.add_screen_image_placeholder) + '/' +
+                resources.getResourceEntryName(R.drawable.add_screen_image_placeholder)
+
+        ll_owner_tel.setOnClickListener {
+            call(model?.ownerTel!!)
+        }
+        ll_logger_tel.setOnClickListener {
+            call(model?.loggerTel!!)
+        }
 
     }
 
@@ -112,19 +120,22 @@ class EstateDetailActivity : AppCompatActivity() {
                     null
                 }
                 else -> {
-                    estateSharingText += "- ${view.text}: $value\n"
+                    estateSharingText += "- ${view.text}: $value.\n"
                 }
+            }
+            if (view == tv_owner_tel)  {
+                ll_owner_tel.visibility = View.VISIBLE
+            }
+            if (view == tv_logger_tel)  {
+                ll_logger_tel.visibility = View.VISIBLE
             }
             view.append(": $value")
         }
     }
 
     private fun setupImagesRecyclerView() {
-
         rvDetailImages.layoutManager = LinearLayoutManager(this)
         rvDetailImages.setHasFixedSize(true)
-        
-
         imagesAdapter = ImagesAdapter(this, model?.images!!)
         rvDetailImages.adapter = imagesAdapter
     }
@@ -133,11 +144,24 @@ class EstateDetailActivity : AppCompatActivity() {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("label",estateSharingText)
         clipboard.setPrimaryClip(clip)
-        val shareIntent = Intent(Intent.ACTION_VIEW)
+        val shareIntent = Intent()
         shareIntent.action = Intent.ACTION_SEND_MULTIPLE
-        shareIntent.putExtra(Intent.EXTRA_STREAM, model?.images)
+        shareIntent.flags = (Intent.FLAG_ACTIVITY_NEW_TASK)
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         shareIntent.putExtra(Intent.EXTRA_TEXT,estateSharingText)
-        shareIntent.type = "*/*"
+        if (model?.images?.get(0) != Uri.parse(defaultImage)) {
+            shareIntent.type = "image/*"
+            shareIntent.putExtra(Intent.EXTRA_STREAM, model?.images)
+        }else{
+            shareIntent.type = "text/*"
+        }
         startActivity(Intent.createChooser(shareIntent, "مشاركة العقار"))
     }
+
+    private fun call(phoneNumber: String){
+        val callIntent = Intent(Intent.ACTION_DIAL)
+        callIntent.data = Uri.parse("tel:$phoneNumber")
+        startActivity(callIntent)
+    }
+
 }

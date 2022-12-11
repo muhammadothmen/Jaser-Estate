@@ -60,5 +60,33 @@
     <string name="edit_text_hint_type">النوع</string>
     <string name="rb_text_buy">شراء</string>
     <string name="btn_text_share">مشاركة</string>
+    <string name="search_view_hint">اكتب للبحث</string>
+    <string name="btn_text_apply">تطبيق</string>
+
+
+    <array name="roomNo_slider_values">
+        <item>2</item>
+        <item>3</item>
+    </array>
+
+    <array name="area_slider_values">
+        <item>100</item>
+        <item>200</item>
+    </array>
+
+    <array name="height_slider_values">
+        <item>2</item>
+        <item>3</item>
+    </array>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="cb_text_full_furniture">مفروش</string>
+    <string name="cb_text_full_partial_furniture">فرش جزي</string>
+    <string name="cb_text_full_no_furniture">غير مفروش</string>
+    <string name="cb_text_legal_green_stamp">طابو أخضر</string>
+    <string name="cb_text_legal_contact">عقد</string>
+    <string name="cb_text_legal_court">حكم محكمة</string>
+    <string name="cb_text_priority_important">هام</string>
+    <string name="cb_text_priority_urgent">مستعجل</string>
 
 </resources>

@@ -3,134 +3,167 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cl_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity"
+    android:layoutDirection="rtl"
     >
 
 
     <FrameLayout
-        android:id="@+id/flToolbarAndSearch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        >
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/tbMain"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/colorPrimary"
-        android:theme="@style/CustomToolBarStyle"
-        />
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/placesSearch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/colorPrimary"
-        app:iconifiedByDefault="false"
-        app:queryBackground="@null"
-        />
-    </FrameLayout>
-
-    <RadioGroup
-        android:id="@+id/rgOfferOrDemand"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        android:background="@drawable/drawable_radio_group_tab_background"
-        android:orientation="horizontal"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/flToolbarAndSearch"
-        android:layoutDirection="ltr"
-        >
-
-
-        <RadioButton
-            android:id="@+id/rbHistory"
-            android:layout_width="0dp"
-            android:layout_height="35dp"
-            android:layout_weight="0.50"
-            android:background="@drawable/drawable_units_tab_selector"
-            android:button="@null"
-            android:checked="false"
-            android:gravity="center"
-            android:text="@string/rb_text_history"
-            android:textColor="@drawable/drawable_units_tab_text_color_selector"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-        <RadioButton
-            android:id="@+id/rbDemand"
-            android:layout_width="0dp"
-            android:layout_height="35dp"
-            android:layout_weight="0.50"
-            android:background="@drawable/drawable_units_tab_selector"
-            android:button="@null"
-            android:checked="false"
-            android:gravity="center"
-            android:text="@string/rb_text_demand"
-            android:textColor="@drawable/drawable_units_tab_text_color_selector"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-        <RadioButton
-            android:id="@+id/rbOffer"
-            android:layout_width="0dp"
-            android:layout_height="35dp"
-            android:layout_weight="0.50"
-            android:background="@drawable/drawable_units_tab_selector"
-            android:button="@null"
-            android:checked="true"
-            android:gravity="center"
-            android:text="@string/rb_text_offer"
-            android:textColor="@drawable/drawable_units_tab_text_color_selector"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-    </RadioGroup>
-
-
-    <FrameLayout
-        android:id="@+id/fl_all"
+        android:id="@+id/fl_show_data"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/rgOfferOrDemand"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginTop="@dimen/add_screen_til_marginTop"
 
         >
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvHappyPlacesList"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:visibility="gone"
-            tools:listitem="@layout/item_happy_place"
-            tools:visibility="visible" />
+            android:orientation="vertical"
+            >
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/tbMain"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="@color/colorPrimary"
+                android:theme="@style/CustomToolBarStyle"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                >
+                <TextView
+                    android:id="@+id/tv_all_data"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_all_data_24"
+                    android:layout_marginEnd="16dp"
+                    />
+                <TextView
+                    android:id="@+id/tv_filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_filter_list_24"
+                    android:layout_marginEnd="16dp"
+                    />
+
+
+                <androidx.appcompat.widget.SearchView
+                    android:id="@+id/placesSearch"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/colorPrimary"
+                    android:textDirection="rtl"
+                    app:iconifiedByDefault="false"
+                    app:queryBackground="@null"
+                    app:defaultQueryHint="@string/search_view_hint"
+                    />
+            </androidx.appcompat.widget.Toolbar>
+
+            <RadioGroup
+                android:id="@+id/rgOfferOrDemand"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:background="@drawable/drawable_radio_group_tab_background"
+                android:orientation="horizontal"
+
+                android:layoutDirection="ltr"
+                >
+
+
+                <RadioButton
+                    android:id="@+id/rbHistory"
+                    android:layout_width="0dp"
+                    android:layout_height="35dp"
+                    android:layout_weight="0.50"
+                    android:background="@drawable/drawable_units_tab_selector"
+                    android:button="@null"
+                    android:checked="false"
+                    android:gravity="center"
+                    android:text="@string/rb_text_history"
+                    android:textColor="@drawable/drawable_units_tab_text_color_selector"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+                <RadioButton
+                    android:id="@+id/rbDemand"
+                    android:layout_width="0dp"
+                    android:layout_height="35dp"
+                    android:layout_weight="0.50"
+                    android:background="@drawable/drawable_units_tab_selector"
+                    android:button="@null"
+                    android:checked="false"
+                    android:gravity="center"
+                    android:text="@string/rb_text_demand"
+                    android:textColor="@drawable/drawable_units_tab_text_color_selector"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+                <RadioButton
+                    android:id="@+id/rbOffer"
+                    android:layout_width="0dp"
+                    android:layout_height="35dp"
+                    android:layout_weight="0.50"
+                    android:background="@drawable/drawable_units_tab_selector"
+                    android:button="@null"
+                    android:checked="true"
+                    android:gravity="center"
+                    android:text="@string/rb_text_offer"
+                    android:textColor="@drawable/drawable_units_tab_text_color_selector"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+            </RadioGroup>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvHappyPlacesList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone"
+                tools:listitem="@layout/item_happy_place"
+                tools:visibility="visible" />
+
+        </LinearLayout>
+
 
         <TextView
-        android:id="@+id/tvNoRecordsAvailable"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/note_text_no_estate"
-        android:layout_gravity="center"
-        android:gravity="center"
-        android:textSize="@dimen/no_records_available_text_size"
-        android:visibility="visible"
-        tools:visibility="visible"/>
-        />
+            android:id="@+id/tvNoRecordsAvailable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/note_text_no_estate"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:textSize="@dimen/no_records_available_text_size"
+            android:visibility="visible"
+            tools:visibility="visible"/>
+
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddHappyPlace"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|right"
+        android:layout_gravity="bottom|start"
         android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@drawable/ic_action_add_24dp" />
+        app:srcCompat="@drawable/ic_action_add_24dp"
+        android:contentDescription="Add Estate" />
+
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/fl_filter_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        >
+
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
