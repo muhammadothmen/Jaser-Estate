@@ -1,18 +1,19 @@
 package com.othman.jaserestate
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.CompoundButton
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.slider.RangeSlider
 import com.othman.jaserestate.activities.AddEstateActivity
 import com.othman.jaserestate.activities.MainActivity
-import kotlinx.android.synthetic.main.activity_add_estate.*
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.activity_main.view.*
 import kotlinx.android.synthetic.main.fragment_filter.*
-
 
 class FilterFragment : Fragment(R.layout.fragment_filter) {
 
@@ -27,25 +28,18 @@ class FilterFragment : Fragment(R.layout.fragment_filter) {
     private var legalQuery = ""
     private var priorityQuery = ""
 
-    private var situationValues = arrayListOf( AddEstateActivity.FULL_MAINTENANCE,
-        AddEstateActivity.UNDER_MEDIUM, AddEstateActivity.MEDIUM ,AddEstateActivity.GOOD,
-        AddEstateActivity.VERY_GOOD ,AddEstateActivity.DELUXE,AddEstateActivity.SUPER_DELUXE)
-    private var roomNoValues = arrayListOf(AddEstateActivity.ONE_ROOM,
-        AddEstateActivity.ONE_R00M_WITH_SALON, AddEstateActivity.TWO_ROOM_WITH_DISTRIBUTOR,
-        AddEstateActivity.TWO_R00M_WITH_SALON, AddEstateActivity.TWO_ROOM_WITH_DISTRIBUTOR,
-        AddEstateActivity.THREE_R00M_WITH_SALON, AddEstateActivity.FOUR_ROOM_WITH_DISTRIBUTOR,
-        AddEstateActivity.FOUR_R00M_WITH_SALON, AddEstateActivity.FIFE_ROOM_WITH_DISTRIBUTOR,
-        AddEstateActivity.FIFE_R00M_WITH_SALON, AddEstateActivity.SIX_ROOM_WITH_DISTRIBUTOR,
-        AddEstateActivity.SIX_R00M_WITH_SALON, AddEstateActivity.SEVEN_ROOM_WITH_DISTRIBUTOR,
-        AddEstateActivity.SEVEN_R00M_WITH_SALON, AddEstateActivity.EIGHT_ROOM_WITH_DISTRIBUTOR,
-        AddEstateActivity.EIGHT_ROOM_WITH_SALON, AddEstateActivity.NINE_ROOM_WITH_DISTRIBUTOR,
-        AddEstateActivity.NINE_ROOM_WITH_SALON, AddEstateActivity.OTHER_ROOM_N0)
     private var filterSituationValues = arrayListOf(2,3)
     private var filterFurnitureSituationValues = arrayListOf(2,3)
     private var filterRoomNoValues = arrayListOf(2,3)
     private var filterAreaValues = arrayListOf(100,200)
     private var filterHeightValues = arrayListOf(2,3)
     private var filterDirectionValues = arrayListOf(2,3)
+
+    private var filterTypeList = arrayListOf(filterSituationValues, filterFurnitureSituationValues,
+    filterHeightValues, filterDirectionValues, filterRoomNoValues, filterAreaValues)
+    private var situationValues = arrayListOf( AddEstateActivity.FULL_MAINTENANCE,
+        AddEstateActivity.UNDER_MEDIUM, AddEstateActivity.MEDIUM ,AddEstateActivity.GOOD,
+        AddEstateActivity.VERY_GOOD ,AddEstateActivity.DELUXE,AddEstateActivity.SUPER_DELUXE)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -65,42 +59,14 @@ class FilterFragment : Fragment(R.layout.fragment_filter) {
             val allQuery = areaQuery + typeQuery + situationQuery + furnitureQuery +
                     furnitureSituationQuery + legalQuery + priorityQuery + roomQuery +
                     heightQuery + directionQuery
-            (activity as MainActivity).setWhereClauseQuery()
+            (activity as MainActivity).resetWhereClauseQuery()
             (activity as MainActivity).whereClauseQuery += allQuery
             (activity as MainActivity).getHappyPlacesListFromLocalDB()
             activity?.fl_show_data?.visibility = View.VISIBLE
             activity?.onBackPressedDispatcher?.onBackPressed()
         }
 
-
-        sw_filter_area.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                areaQuery = " and area * 10 between (${filterAreaValues[0]} * 10) and (${filterAreaValues[1]} * 10)"
-                ll2_filter_area.visibility = View.VISIBLE
-            }else{
-                ll2_filter_area.visibility = View.GONE
-                areaQuery = ""
-            }
-        }
-        rs_filter_area.addOnChangeListener(object : RangeSlider.OnChangeListener {
-            override fun onValueChange(slider: RangeSlider, value: Float, fromUser: Boolean) {
-                filterAreaValues[0] = slider.values[0].toInt()
-                filterAreaValues[1] = slider.values[1].toInt()
-                tv_filter_area_low_value.text = slider.values[0].toInt().toString()
-                tv_filter_area_high_value.text = slider.values[1].toInt().toString()
-                areaQuery = " and area * 10 between (${filterAreaValues[0]} * 10) and (${filterAreaValues[1]} * 10)"
-            }
-        })
-
-        sw_filter_type.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                ll2_filter_type.visibility = View.VISIBLE
-            }else{
-                ll2_filter_type.visibility = View.GONE
-                typeQuery = ""
-            }
-        }
-        val typeCheckBoxListener = CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
+        val checkBoxListener = CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
                 when (buttonView) {
                     cb_filter_sale -> {
@@ -127,44 +93,7 @@ class FilterFragment : Fragment(R.layout.fragment_filter) {
                         cb_filter_bet.isChecked = false
                         cb_filter_sale.isChecked = false
                     }
-                }
-            }
-        }
-        cb_filter_sale.setOnCheckedChangeListener(typeCheckBoxListener)
-        cb_filter_rent.setOnCheckedChangeListener(typeCheckBoxListener)
-        cb_filter_bet.setOnCheckedChangeListener(typeCheckBoxListener)
-        cb_filter_buy.setOnCheckedChangeListener(typeCheckBoxListener)
 
-
-        sw_filter_situation.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                filterSituationValues = arrayListOf(2,3)
-                setSituationQuery()
-                ll2_filter_situation.visibility = View.VISIBLE
-            }else{
-                ll2_filter_situation.visibility = View.GONE
-                situationQuery = ""
-            }
-        }
-        rs_filter_situation.addOnChangeListener(RangeSlider.OnChangeListener { slider, value, fromUser ->
-            filterSituationValues[0] = slider.values[0].toInt()
-            filterSituationValues[1] = slider.values[1].toInt()
-            tv_filter_situation_low_value.text = situationValues[filterSituationValues[0]]
-            tv_filter_situation_high_value.text = situationValues[filterSituationValues[1]]
-            setSituationQuery()
-        })
-
-        sw_filter_furniture.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                ll2_filter_furniture.visibility = View.VISIBLE
-            }else{
-                ll2_filter_furniture.visibility = View.GONE
-                furnitureQuery = ""
-            }
-        }
-        val furnitureCheckBoxListener = CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked) {
-                when (buttonView) {
                     cb_filter_full_furniture -> {
                         furnitureQuery = " and furniture = '${AddEstateActivity.FULL_FURNITURE}'"
                         cb_filter_partial_furniture.isChecked = false
@@ -180,44 +109,7 @@ class FilterFragment : Fragment(R.layout.fragment_filter) {
                         cb_filter_partial_furniture.isChecked = false
                         cb_filter_full_furniture.isChecked = false
                     }
-                }
-            }
-        }
-        cb_filter_full_furniture.setOnCheckedChangeListener(furnitureCheckBoxListener)
-        cb_filter_partial_furniture.setOnCheckedChangeListener(furnitureCheckBoxListener)
-        cb_filter_no_furniture.setOnCheckedChangeListener(furnitureCheckBoxListener)
 
-
-        sw_filter_furniture_situation.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                filterFurnitureSituationValues = arrayListOf(2,3)
-                setFurnitureSituationQuery()
-                ll2_filter_furniture_situation.visibility = View.VISIBLE
-            }else{
-                ll2_filter_furniture_situation.visibility = View.GONE
-                furnitureSituationQuery = ""
-            }
-        }
-        rs_filter_furniture_situation.addOnChangeListener(RangeSlider.OnChangeListener { slider, value, fromUser ->
-            filterFurnitureSituationValues[0] = slider.values[0].toInt()
-            filterFurnitureSituationValues[1] = slider.values[1].toInt()
-            tv_filter_furniture_situation_low_value.text = situationValues[filterFurnitureSituationValues[0]]
-            tv_filter_furniture_situation_high_value.text = situationValues[filterFurnitureSituationValues[1]]
-            setFurnitureSituationQuery()
-        })
-
-
-        sw_filter_legal.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                ll2_filter_legal.visibility = View.VISIBLE
-            }else{
-                ll2_filter_legal.visibility = View.GONE
-                legalQuery = ""
-            }
-        }
-        val legalCheckBoxListener = CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked) {
-                when (buttonView) {
                     cb_filter_legal_green_stamp -> {
                         legalQuery = " and legal = '${AddEstateActivity.GREEN_STAMP}'"
                         cb_filter_legal_contact.isChecked = false
@@ -233,25 +125,7 @@ class FilterFragment : Fragment(R.layout.fragment_filter) {
                         cb_filter_legal_green_stamp.isChecked = false
                         cb_filter_legal_court.isChecked = false
                     }
-                }
-            }
-        }
-        cb_filter_legal_green_stamp.setOnCheckedChangeListener(legalCheckBoxListener)
-        cb_filter_legal_court.setOnCheckedChangeListener(legalCheckBoxListener)
-        cb_filter_legal_contact.setOnCheckedChangeListener(legalCheckBoxListener)
 
-        sw_filter_priority.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                ll2_filter_priority.visibility = View.VISIBLE
-
-            }else{
-                ll2_filter_priority.visibility = View.GONE
-                priorityQuery = ""
-            }
-        }
-        val priorityCheckBoxListener = CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked) {
-                when (buttonView) {
                     cb_filter_priority_important -> {
                         priorityQuery = priorityQuery.removeSuffix(" and priority like '%وغير هام'")
                         priorityQuery += " and priority like '%وهام'"
@@ -260,93 +134,223 @@ class FilterFragment : Fragment(R.layout.fragment_filter) {
                         priorityQuery = priorityQuery.removeSuffix(" and priority like 'غير مستعجل%'")
                         priorityQuery += " and priority like 'مستعجل%'"
                     }
+
                 }
+
             }else{
                 when (buttonView) {
                     cb_filter_priority_important -> {
                         priorityQuery = priorityQuery.removeSuffix(" and priority like '%وهام'")
                         priorityQuery += " and priority like '%وغير هام'"
-
                     }
                     cb_filter_priority_urgent -> {
                         priorityQuery = priorityQuery.removeSuffix(" and priority like 'مستعجل%'")
                         priorityQuery += " and priority like 'غير مستعجل%'"
-
                     }
                 }
-
             }
         }
-        cb_filter_priority_important.setOnCheckedChangeListener(priorityCheckBoxListener)
-        cb_filter_priority_urgent.setOnCheckedChangeListener(priorityCheckBoxListener)
 
+        switchInit(sw_filter_type, ll2_filter_type,null, TYPE)
+        cb_filter_sale.setOnCheckedChangeListener(checkBoxListener)
+        cb_filter_rent.setOnCheckedChangeListener(checkBoxListener)
+        cb_filter_bet.setOnCheckedChangeListener(checkBoxListener)
+        cb_filter_buy.setOnCheckedChangeListener(checkBoxListener)
 
-        sw_filter_roomNo.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                filterRoomNoValues = arrayListOf(2,3)
-                setRoomNoQuery()
-                ll2_filter_roomNo.visibility = View.VISIBLE
-            }else{
-                ll2_filter_roomNo.visibility = View.GONE
-                roomQuery = ""
+        switchInit(sw_filter_furniture, ll2_filter_furniture, null, FURNITURE)
+        cb_filter_full_furniture.setOnCheckedChangeListener(checkBoxListener)
+        cb_filter_partial_furniture.setOnCheckedChangeListener(checkBoxListener)
+        cb_filter_no_furniture.setOnCheckedChangeListener(checkBoxListener)
+
+        switchInit(sw_filter_legal, ll2_filter_legal, null, LEGAL)
+        cb_filter_legal_green_stamp.setOnCheckedChangeListener(checkBoxListener)
+        cb_filter_legal_court.setOnCheckedChangeListener(checkBoxListener)
+        cb_filter_legal_contact.setOnCheckedChangeListener(checkBoxListener)
+
+        switchInit(sw_filter_priority, ll2_filter_priority, null, PRIORITY)
+        cb_filter_priority_important.setOnCheckedChangeListener(checkBoxListener)
+        cb_filter_priority_urgent.setOnCheckedChangeListener(checkBoxListener)
+
+        val rangeSliderListener = RangeSlider.OnChangeListener { slider, value, fromUser ->
+            when(slider){
+                rs_filter_situation -> {
+                    sliderInit(rs_filter_situation, tv_filter_situation_low_value, tv_filter_situation_high_value, ::setSituationQuery, SITUATION)
+                }
+                rs_filter_furniture_situation -> {
+                    sliderInit(rs_filter_furniture_situation, tv_filter_furniture_situation_low_value, tv_filter_furniture_situation_high_value, ::setFurnitureSituationQuery, FURNITURE_SITUATION)
+                }
+                rs_filter_roomNO -> {
+                    sliderInit(rs_filter_roomNO, tv_filter_roomNo_low_value, tv_filter_roomNo_high_value, ::setRoomNoQuery, ROOM)
+                }
+                rs_filter_height -> {
+                    sliderInit(rs_filter_height, tv_filter_height_low_value, tv_filter_height_high_value, ::setHeightQuery , HEIGHT)
+                }
+                rs_filter_direction -> {
+                    sliderInit(rs_filter_direction, tv_filter_direction_low_value, tv_filter_direction_high_value, ::setDirectionQuery , DIRECTION)
+                }
+                rs_filter_area -> {
+                    sliderInit(rs_filter_area, tv_filter_area_low_value, tv_filter_area_high_value, ::setAreaQuery, AREA)
+                }
             }
         }
-        rs_filter_roomNO.addOnChangeListener(RangeSlider.OnChangeListener { slider, value, fromUser ->
-            filterRoomNoValues[0] = slider.values[0].toInt()
-            filterRoomNoValues[1] = slider.values[1].toInt()
-            tv_filter_roomNo_low_value.text = filterRoomNoValues[0].toString()
-            tv_filter_roomNo_high_value.text = filterRoomNoValues[1].toString()
-            setRoomNoQuery()
-        })
 
+        switchInit(sw_filter_area, ll2_filter_area, ::setAreaQuery, AREA)
+        rs_filter_area.addOnChangeListener(rangeSliderListener)
 
+        switchInit(sw_filter_situation, ll2_filter_situation, ::setSituationQuery, SITUATION)
+        rs_filter_situation.addOnChangeListener(rangeSliderListener)
 
-        sw_filter_height.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                filterHeightValues = arrayListOf(2,3)
-                setHeightQuery()
-                ll2_filter_height.visibility = View.VISIBLE
-            }else{
-                ll2_filter_height.visibility = View.GONE
-                heightQuery = ""
-            }
-        }
-        rs_filter_height.addOnChangeListener(object : RangeSlider.OnChangeListener {
-            override fun onValueChange(slider: RangeSlider, value: Float, fromUser: Boolean) {
-                filterHeightValues[0] = slider.values[0].toInt()
-                filterHeightValues[1] = slider.values[1].toInt()
-                tv_filter_height_low_value.text = slider.values[0].toInt().toString()
-                tv_filter_height_high_value.text = slider.values[1].toInt().toString()
-                setHeightQuery()
-            }
-        })
+        switchInit(sw_filter_furniture_situation, ll2_filter_furniture_situation,::setFurnitureSituationQuery, FURNITURE_SITUATION)
+        rs_filter_furniture_situation.addOnChangeListener(rangeSliderListener)
 
+        switchInit(sw_filter_roomNo, ll2_filter_roomNo, ::setRoomNoQuery, ROOM)
+        rs_filter_roomNO.addOnChangeListener(rangeSliderListener)
 
-        sw_filter_direction.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked){
-                filterDirectionValues = arrayListOf(2,3)
-                setDirectionQuery()
-                ll2_filter_direction.visibility = View.VISIBLE
-            }else{
-                ll2_filter_direction.visibility = View.GONE
-                directionQuery = ""
-            }
-        }
-        rs_filter_direction.addOnChangeListener(object : RangeSlider.OnChangeListener {
-            override fun onValueChange(slider: RangeSlider, value: Float, fromUser: Boolean) {
-                filterDirectionValues[0] = slider.values[0].toInt()
-                filterDirectionValues[1] = slider.values[1].toInt()
-                tv_filter_direction_low_value.text = slider.values[0].toInt().toString()
-                tv_filter_direction_high_value.text = slider.values[1].toInt().toString()
-                setDirectionQuery()
-            }
-        })
+        switchInit(sw_filter_height, ll2_filter_height, ::setHeightQuery, HEIGHT)
+        rs_filter_height.addOnChangeListener(rangeSliderListener)
 
+        switchInit(sw_filter_direction, ll2_filter_direction, ::setDirectionQuery, DIRECTION)
+        rs_filter_direction.addOnChangeListener(rangeSliderListener)
+
+    }
+
+    private fun setAreaQuery() {
+        areaQuery =
+            " and area * 10 between (${filterTypeList[AREA][0]} * 10) and (${filterTypeList[AREA][1]} * 10)"
+        Log.e("Jasser",areaQuery)
 
     }
 
     private fun setSituationQuery() {
-        situationQuery = ""
+        situationQuery = setQuery(SITUATION, situationList,0,1)
+    }
+
+    private fun setFurnitureSituationQuery() {
+        furnitureSituationQuery = setQuery(FURNITURE_SITUATION, furnitureSituationList,0,1)
+    }
+
+    private fun setRoomNoQuery() {
+        roomQuery = setQuery(ROOM, roomList,-1,0)
+    }
+
+    private fun setHeightQuery() {
+        heightQuery = setQuery(HEIGHT, heightList, 2,3)
+    }
+
+    private fun setDirectionQuery() {
+        directionQuery = setQuery(DIRECTION, directionList, -1,0)
+    }
+
+    private fun setQuery(type: Int, queryList: ArrayList<String>, lowOffset: Int, highOffset: Int): String{
+        resetFilterTypeList()
+        val mFilterTypeList = filterTypeList[type]
+        var query = " and ("
+        for (item in mFilterTypeList[0] + lowOffset until mFilterTypeList[1] + highOffset) {
+            query += queryList[item]
+            if (item != mFilterTypeList[1] + highOffset - 1) {
+                query += " or "
+            }else{
+                query += ")"
+            }
+        }
+        Log.e("Jasser",query)
+        return  query
+    }
+
+    private fun resetFilterTypeList() {
+        filterTypeList = arrayListOf(
+            filterSituationValues, filterFurnitureSituationValues,
+            filterHeightValues, filterDirectionValues, filterRoomNoValues, filterAreaValues
+        )
+    }
+
+    private fun switchInit(switch: SwitchCompat, filterLayout: LinearLayout, setQueryFunction: (() -> Unit)?, type: Int){
+
+        switch.setOnCheckedChangeListener { buttonView, isChecked ->
+            if (isChecked){
+                resetFilterValues(type)
+                if (setQueryFunction != null) {
+                    setQueryFunction()
+                }
+                filterLayout.visibility = View.VISIBLE
+            }else{
+                filterLayout.visibility = View.GONE
+                resetFilterValues(type)
+            }
+        }
+    }
+
+    private fun sliderInit(slider: RangeSlider, tv_low: TextView, tv_high: TextView, setQueryFunction: (() -> Unit)?, type: Int){
+        filterTypeList[type][0] = slider.values[0].toInt()
+        filterTypeList[type][1] = slider.values[1].toInt()
+        if (type == SITUATION || type == FURNITURE_SITUATION){
+            tv_low.text = situationValues[slider.values[0].toInt()]
+            tv_high.text = situationValues[slider.values[1].toInt()]
+        }else{
+            tv_low.text = slider.values[0].toInt().toString()
+            tv_high.text = slider.values[1].toInt().toString()
+        }
+        if (setQueryFunction != null) {
+            setQueryFunction()
+        }
+    }
+
+    private fun resetFilterValues(type: Int){
+        when(type){
+            FURNITURE_SITUATION -> {
+                filterFurnitureSituationValues = arrayListOf(2,3)
+                furnitureSituationQuery = ""
+            }
+            FURNITURE ->{
+                furnitureQuery = ""
+            }
+            SITUATION -> {
+                filterSituationValues = arrayListOf(2,3)
+                situationQuery = ""
+            }
+            AREA -> {
+                filterAreaValues = arrayListOf(100,200)
+                areaQuery = ""
+            }
+            ROOM -> {
+                filterRoomNoValues = arrayListOf(2,3)
+                roomQuery = ""
+            }
+            HEIGHT -> {
+                filterHeightValues = arrayListOf(2,3)
+                heightQuery = ""
+            }
+            DIRECTION -> {
+                filterDirectionValues = arrayListOf(2,3)
+                directionQuery = ""
+            }
+            TYPE ->{
+                typeQuery = ""
+            }
+
+        }
+    }
+
+    companion object{
+        private const val FURNITURE = 6
+        private const val FURNITURE_SITUATION = 1
+        private const val SITUATION = 0
+        private const val ROOM = 4
+        private const val AREA = 5
+        private const val HEIGHT = 2
+        private const val DIRECTION = 3
+        private const val TYPE = 7
+        private const val LEGAL = 8
+        private const val PRIORITY = 9
+        private val furnitureSituationList = arrayListOf(
+            "furnitureSituation = '${AddEstateActivity.FULL_MAINTENANCE}'",
+            "furnitureSituation = '${AddEstateActivity.UNDER_MEDIUM}'",
+            "furnitureSituation = '${AddEstateActivity.MEDIUM}'",
+            "furnitureSituation = '${AddEstateActivity.GOOD}'",
+            "furnitureSituation = '${AddEstateActivity.VERY_GOOD}'",
+            "furnitureSituation = '${AddEstateActivity.DELUXE}'",
+            "furnitureSituation = '${AddEstateActivity.SUPER_DELUXE}'"
+        )
         val situationList = arrayListOf(
             "situation = '${AddEstateActivity.FULL_MAINTENANCE}'",
             "situation = '${AddEstateActivity.UNDER_MEDIUM}'",
@@ -356,41 +360,6 @@ class FilterFragment : Fragment(R.layout.fragment_filter) {
             "situation = '${AddEstateActivity.DELUXE}'",
             "situation = '${AddEstateActivity.SUPER_DELUXE}'"
         )
-        situationQuery = " and ("
-        for (situation in filterSituationValues[0] until filterSituationValues[1] + 1) {
-            situationQuery += situationList[situation]
-            if (situation != filterSituationValues[1]) {
-                situationQuery += " or "
-            }else{
-                situationQuery += ")"
-            }
-        }
-    }
-
-    private fun setFurnitureSituationQuery() {
-        furnitureSituationQuery = ""
-        val situationList = arrayListOf(
-            "furnitureSituation = '${AddEstateActivity.FULL_MAINTENANCE}'",
-            "furnitureSituation = '${AddEstateActivity.UNDER_MEDIUM}'",
-            "furnitureSituation = '${AddEstateActivity.MEDIUM}'",
-            "furnitureSituation = '${AddEstateActivity.GOOD}'",
-            "furnitureSituation = '${AddEstateActivity.VERY_GOOD}'",
-            "furnitureSituation = '${AddEstateActivity.DELUXE}'",
-            "furnitureSituation = '${AddEstateActivity.SUPER_DELUXE}'"
-        )
-        furnitureSituationQuery = " and ("
-        for (situation in filterFurnitureSituationValues[0] until filterFurnitureSituationValues[1] + 1) {
-            furnitureSituationQuery += situationList[situation]
-            if (situation != filterFurnitureSituationValues[1]) {
-                furnitureSituationQuery += " or "
-            }else{
-                furnitureSituationQuery += ")"
-            }
-        }
-    }
-
-    private fun setRoomNoQuery() {
-        roomQuery = ""
         val roomList = arrayListOf(
             "roomNo = '${AddEstateActivity.ONE_ROOM}'",
             "roomNo = '${AddEstateActivity.ONE_R00M_WITH_SALON}' or roomNo = '${AddEstateActivity.TWO_ROOM_WITH_DISTRIBUTOR}'",
@@ -402,22 +371,7 @@ class FilterFragment : Fragment(R.layout.fragment_filter) {
             "roomNo = '${AddEstateActivity.SEVEN_R00M_WITH_SALON}' or roomNo = '${AddEstateActivity.EIGHT_ROOM_WITH_DISTRIBUTOR}'",
             "roomNo = '${AddEstateActivity.EIGHT_ROOM_WITH_SALON}' or roomNo = '${AddEstateActivity.NINE_ROOM_WITH_DISTRIBUTOR}'",
             "roomNo = '${AddEstateActivity.NINE_ROOM_WITH_SALON}' or roomNo = '${AddEstateActivity.OTHER_ROOM_N0}'"
-            )
-        roomQuery = " and ("
-        for (situation in filterRoomNoValues[0] -1 until filterRoomNoValues[1]) {
-            roomQuery += roomList[situation]
-            if (situation != filterRoomNoValues[1]-1) {
-                roomQuery += " or "
-            }else{
-                roomQuery += ")"
-            }
-        }
-    }
-
-
-
-    private fun setHeightQuery() {
-        heightQuery = ""
+        )
         val heightList = arrayListOf(
             "height = '${AddEstateActivity.SECOND_UNDER_GROUND}'",
             "height = '${AddEstateActivity.FIRST_UNDER_GROUND}' or height = '${AddEstateActivity.GARDEN_UNDER_GROUND}'",
@@ -430,43 +384,25 @@ class FilterFragment : Fragment(R.layout.fragment_filter) {
             "height = '${AddEstateActivity.SIXTH}'",
             "height = '${AddEstateActivity.SURFACE}'"
         )
-        heightQuery = " and ("
-        for (situation in filterHeightValues[0] + 2 until filterHeightValues[1] + 3) {
-            heightQuery += heightList[situation]
-            if (situation != filterHeightValues[1]+2) {
-                heightQuery += " or "
-            }else{
-                heightQuery += ")"
-            }
-        }
-    }
-
-    private fun setDirectionQuery() {
-        directionQuery = ""
         val directionList = arrayListOf(
-        "directions = '${AddEstateActivity.NORTH}' or directions = '${AddEstateActivity.SOUTH}' or directions = '${AddEstateActivity.EAST}' or directions = '${AddEstateActivity.WEST}'",
+            "directions = '${AddEstateActivity.NORTH}' or directions = '${AddEstateActivity.SOUTH}' or directions = '${AddEstateActivity.EAST}' or directions = '${AddEstateActivity.WEST}'",
             "directions LIKE 'زاوية%' or directions LIKE 'حشوة%'",
             "directions LIKE 'نصف%'",
             "directions = '${AddEstateActivity.FULL}'"
         )
-        directionQuery = " and ("
-        for (situation in filterDirectionValues[0] -1 until filterDirectionValues[1] ) {
-            directionQuery += directionList[situation]
-            if (situation != filterDirectionValues[1]-1) {
-                directionQuery += " or "
-            }else{
-                directionQuery += ")"
-            }
-        }
+
     }
-
-
-
 
     override fun onStop() {
         super.onStop()
+        //activity?.onBackPressedDispatcher?.onBackPressed()
         activity?.fl_show_data?.visibility = View.VISIBLE
     }
 
+    override fun onResume() {
+        super.onResume()
+        activity?.fl_show_data?.visibility = View.GONE
+    }
+    
     }
 

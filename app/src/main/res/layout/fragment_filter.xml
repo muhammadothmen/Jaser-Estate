@@ -58,7 +58,7 @@
                     android:textStyle="bold"
                     android:text="@string/edit_text_hint_type"
                     />
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_filter_type"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -147,7 +147,7 @@
                     android:textStyle="bold"
                     android:text="@string/edit_text_hint_roomNo"
                     />
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_filter_roomNo"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -227,7 +227,7 @@
                     android:textStyle="bold"
                     android:text="@string/edit_text_hint_area"
                     />
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_filter_area"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -306,7 +306,7 @@
                     android:textStyle="bold"
                     android:text="@string/edit_text_hint_height"
                     />
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_filter_height"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -385,7 +385,7 @@
                     android:textStyle="bold"
                     android:text="@string/edit_text_hint_directions"
                     />
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_filter_direction"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -464,7 +464,7 @@
                     android:textStyle="bold"
                     android:text="@string/edit_text_hint_situation"
                     />
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_filter_situation"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -487,7 +487,7 @@
                     android:id="@+id/tv_filter_situation_low_value"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
+                    android:layout_height="50dp"
                     android:textColor="@color/detail_screen_description_text_color"
                     android:textSize="@dimen/detail_screen_location_text_size"
                     android:textStyle="bold"
@@ -512,7 +512,7 @@
                     android:id="@+id/tv_filter_situation_high_value"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
+                    android:layout_height="50dp"
                     android:textColor="@color/detail_screen_description_text_color"
                     android:textSize="@dimen/detail_screen_location_text_size"
                     android:textStyle="bold"
@@ -544,7 +544,7 @@
                     android:textStyle="bold"
                     android:text="@string/edit_text_hint_furniture"
                     />
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_filter_furniture"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -623,7 +623,7 @@
                     android:textStyle="bold"
                     android:text="@string/edit_text_hint_furniture_situation"
                     />
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_filter_furniture_situation"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -646,7 +646,7 @@
                     android:id="@+id/tv_filter_furniture_situation_low_value"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
+                    android:layout_height="50dp"
                     android:textColor="@color/detail_screen_description_text_color"
                     android:textSize="@dimen/detail_screen_location_text_size"
                     android:textStyle="bold"
@@ -671,7 +671,7 @@
                     android:id="@+id/tv_filter_furniture_situation_high_value"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
+                    android:layout_height="50dp"
                     android:textColor="@color/detail_screen_description_text_color"
                     android:textSize="@dimen/detail_screen_location_text_size"
                     android:textStyle="bold"
@@ -703,7 +703,7 @@
                     android:textStyle="bold"
                     android:text="@string/edit_text_hint_legal"
                     />
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_filter_legal"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -783,7 +783,7 @@
                     android:textStyle="bold"
                     android:text="@string/edit_text_hint_priority"
                     />
-                <Switch
+                <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/sw_filter_priority"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"

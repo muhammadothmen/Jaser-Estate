@@ -16,7 +16,6 @@ import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.slider.RangeSlider
 import com.othman.jaserestate.FilterFragment
 import com.othman.jaserestate.R
 import com.othman.jaserestate.adapters.placeAdapter
@@ -75,21 +74,21 @@ class MainActivity : AppCompatActivity() {
             if (checkedId == R.id.rbOffer){
                 offerOrDemand = OFFER
                 isDone = NOT_DONE
-                setWhereClauseQuery()
+                resetWhereClauseQuery()
                 fabAddHappyPlace.visibility = View.VISIBLE
                 getHappyPlacesListFromLocalDB()
             }
             if (checkedId == R.id.rbDemand){
                 offerOrDemand = DEMAND
                 isDone = NOT_DONE
-                setWhereClauseQuery()
+                resetWhereClauseQuery()
                 fabAddHappyPlace.visibility = View.VISIBLE
                 getHappyPlacesListFromLocalDB()
             }
             if (checkedId == R.id.rbHistory){
                 offerOrDemand = HISTORY
                 isDone = DONE
-                setWhereClauseQuery()
+                resetWhereClauseQuery()
                 fabAddHappyPlace.visibility = View.GONE
                 getHappyPlacesListFromLocalDB()
             }
@@ -218,7 +217,7 @@ class MainActivity : AppCompatActivity() {
         Log.e("Jasser",deleted.toString())
     }
 
-     internal fun setWhereClauseQuery(){
+     internal fun resetWhereClauseQuery(){
         if (offerOrDemand != HISTORY) {
             defaultWhereClauseQuery = "where offerOrDemand = $offerOrDemand and isDone = $isDone"
         }else{
@@ -226,6 +225,8 @@ class MainActivity : AppCompatActivity() {
         }
         whereClauseQuery = defaultWhereClauseQuery
     }
+
+
 
 
 
