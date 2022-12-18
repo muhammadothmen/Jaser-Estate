@@ -5,7 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.AddEstateActivity">
+    tools:context=".activities.AddEstateActivity"
+    >
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/tbAddPlace"
         android:layout_width="match_parent"
@@ -14,7 +15,9 @@
         android:theme="@style/CustomToolBarStyle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:layoutDirection="rtl"
+        />
 
     <ScrollView
         android:id="@+id/svMain"
@@ -296,11 +299,10 @@
                     android:layout_height="wrap_content"
                     android:focusable="false"
                     android:focusableInTouchMode="false"
-                    android:hint="@string/edit_text_hint_furniture_situation"
+                    tools:hint="@string/edit_text_hint_furniture_situation"
                     android:inputType="text"
                     android:gravity="right"
                     android:textColor="@color/primary_text_color"
-                    android:textColorHint="@color/secondary_text_color"
                     android:textSize="@dimen/edit_text_text_size" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -319,11 +321,10 @@
                     android:layout_height="wrap_content"
                     android:focusable="false"
                     android:focusableInTouchMode="false"
-                    android:hint="@string/edit_text_hint_situation"
+                    tools:hint="@string/edit_text_hint_situation"
                     android:inputType="text"
                     android:gravity="right"
                     android:textColor="@color/primary_text_color"
-                    android:textColorHint="@color/secondary_text_color"
                     android:textSize="@dimen/edit_text_text_size" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -405,13 +406,12 @@
                     android:id="@+id/et_price"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/edit_text_hint_price"
+                    tools:hint="@string/edit_text_hint_price"
                     android:inputType="text"
                     android:focusable="false"
                     android:focusableInTouchMode="false"
                     android:gravity="right"
                     android:textColor="@color/primary_text_color"
-                    android:textColorHint="@color/secondary_text_color"
                     android:textSize="@dimen/edit_text_text_size" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -428,11 +428,10 @@
                     android:id="@+id/et_owner"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/edit_text_hint_owner"
+                    tools:hint ="@string/edit_text_hint_owner"
                     android:inputType="text"
                     android:gravity="right"
                     android:textColor="@color/primary_text_color"
-                    android:textColorHint="@color/secondary_text_color"
                     android:textSize="@dimen/edit_text_text_size" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -449,11 +448,10 @@
                     android:id="@+id/et_owner_tel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/edit_text_hint_owner_tel"
+                    tools:hint ="@string/edit_text_hint_owner_tel"
                     android:inputType="phone"
                     android:gravity="right"
                     android:textColor="@color/primary_text_color"
-                    android:textColorHint="@color/secondary_text_color"
                     android:textSize="@dimen/edit_text_text_size" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -542,11 +540,9 @@
                     android:layout_height="wrap_content"
                     android:focusable="false"
                     android:focusableInTouchMode="false"
-                    android:hint="@string/edit_text_hint_owner_standards"
                     android:inputType="text"
                     android:gravity="right"
                     android:textColor="@color/primary_text_color"
-                    android:textColorHint="@color/secondary_text_color"
                     android:textSize="@dimen/edit_text_text_size" />
             </com.google.android.material.textfield.TextInputLayout>
 

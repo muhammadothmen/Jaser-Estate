@@ -5,7 +5,7 @@ import android.os.Parcel
 import android.os.Parcelable
 import java.util.ArrayList
 
-data class HappyPlaceModel(
+data class EstateModel(
     var id: Int,
     val loggingDate: String?,
     val offerOrDemand: Int,
@@ -15,8 +15,10 @@ data class HappyPlaceModel(
     val longitude: Double,
     val area: Int,
     val roomNo: String?,
+    val roomNoHigh: String?,
     val directions: String?,
     val height: String?,
+    val heightHigh: String?,
     val frontOrBack: String?,
     val floorHousesNo: Int,
     val situation: String?,
@@ -52,6 +54,8 @@ data class HappyPlaceModel(
         parcel.readDouble(),
         parcel.readDouble(),
         parcel.readInt(),
+        parcel.readString(),
+        parcel.readString(),
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
@@ -92,8 +96,10 @@ data class HappyPlaceModel(
         parcel.writeDouble(longitude)
         parcel.writeInt(area)
         parcel.writeString(roomNo)
+        parcel.writeString(roomNoHigh)
         parcel.writeString(directions)
         parcel.writeString(height)
+        parcel.writeString(heightHigh)
         parcel.writeString(frontOrBack)
         parcel.writeInt(floorHousesNo)
         parcel.writeString(situation)
@@ -125,12 +131,12 @@ data class HappyPlaceModel(
         return 0
     }
 
-    companion object CREATOR : Parcelable.Creator<HappyPlaceModel> {
-        override fun createFromParcel(parcel: Parcel): HappyPlaceModel {
-            return HappyPlaceModel(parcel)
+    companion object CREATOR : Parcelable.Creator<EstateModel> {
+        override fun createFromParcel(parcel: Parcel): EstateModel {
+            return EstateModel(parcel)
         }
 
-        override fun newArray(size: Int): Array<HappyPlaceModel?> {
+        override fun newArray(size: Int): Array<EstateModel?> {
             return arrayOfNulls(size)
         }
     }

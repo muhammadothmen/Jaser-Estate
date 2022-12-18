@@ -1,19 +1,18 @@
 package com.othman.jaserestate.activities
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.Dialog
 import android.content.*
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.support.media.ExifInterface
 import android.net.Uri
-import android.os.Bundle
-import android.os.Environment
-import android.os.Handler
-import android.os.Looper
+import android.os.*
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
@@ -23,6 +22,8 @@ import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -39,7 +40,7 @@ import com.othman.jaserestate.R
 import com.othman.jaserestate.adapters.DialogAdapter
 import com.othman.jaserestate.adapters.ImagesAdapter
 import com.othman.jaserestate.database.DatabaseHandler
-import com.othman.jaserestate.models.HappyPlaceModel
+import com.othman.jaserestate.models.EstateModel
 import com.othman.jaserestate.utils.SwipeToDeleteCallback
 import kotlinx.android.synthetic.main.activity_add_estate.*
 import kotlinx.android.synthetic.main.area_dialog_layout.*
@@ -61,7 +62,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private var toDeleteImageList = ArrayList<Uri>()
     private var mLatitude : Double = 0.0
     private var mLongitude: Double = 0.0
-    private var mHappyPlaceDetails :HappyPlaceModel? = null
+    private var mEstateDetails :EstateModel? = null
     private var otherStandard = ""
     private var loggerName = ""
     private var furniture = ""
@@ -73,6 +74,10 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private var type = SALE
     private var loggerType = ""
     private var offerOrDemand = 1
+    private var roomNo = ""
+    private var height = ""
+    private var roomNoHigh: String? = null
+    private var heightHigh: String? = null
     private lateinit var imagesAdapter: ImagesAdapter
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
     private lateinit var selectDialog: Dialog
@@ -113,6 +118,36 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var defaultImage: String
     private lateinit var cameraPhotoPath: String
     private lateinit var cameraPhotoUri: Uri
+    private var selectNumber = SELECT_LOW
+    private val readImagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+        android.Manifest.permission.READ_MEDIA_IMAGES
+    else android.Manifest.permission.READ_EXTERNAL_STORAGE
+    private val cameraPermission = android.Manifest.permission.CAMERA
+
+
+    private val permissionsResultLauncher: ActivityResultLauncher<Array<String>> =
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()){
+                permissions ->
+            permissions.entries.forEach{
+                val permissionName = it.key
+                val isGranted = it.value
+                if (isGranted){
+                    if (permissionName == readImagePermission){
+                        //
+                    }else{
+                        //
+                  }
+                }else{
+                    if (permissionName == readImagePermission){
+                        Toast.makeText(this,"لا يوجد سماح للوصول للاستوديو",Toast.LENGTH_SHORT).show()
+                    }else{
+                        Toast.makeText(this,"لا يوجد سماح لوصول للكاميرا",Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+        }
 
 
     private val openGalleryLauncher: ActivityResultLauncher<Intent> =
@@ -154,41 +189,39 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_estate)
 
+        //get offerOrDemand form main Activity
+        if (intent.hasExtra(MainActivity.OFFER_OR_DEMAND)) {
+            offerOrDemand = intent.getIntExtra(MainActivity.OFFER_OR_DEMAND, MainActivity.OFFER)
+        }
+
+
+
         //set tool bar
         setSupportActionBar(tbAddPlace)
         if (supportActionBar != null){
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
-            supportActionBar?.title = "إضافة عقار"
+            if(offerOrDemand == MainActivity.OFFER){
+                supportActionBar?.title = "إضافة عقار للعرض"
+            }else{
+                supportActionBar?.title = "إضافة عقار مطلوب"
+            }
         }
         tbAddPlace.setNavigationOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
 
-        //get offerOrDemand form main Activity
-        if (intent.hasExtra(MainActivity.OFFER_OR_DEMAND)) {
-            offerOrDemand = intent.getIntExtra(MainActivity.OFFER_OR_DEMAND,1)
-            if (offerOrDemand == MainActivity.DEMAND){
-                et_negatives.visibility = View.GONE
-                rvAddImages.visibility = View.GONE
-                tv_add_image.visibility = View.GONE
-            }else{
-                et_negatives.visibility = View.VISIBLE
-                rvAddImages.visibility = View.VISIBLE
-                tv_add_image.visibility = View.VISIBLE
-            }
-        }
+
 
         if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAILS)) {
-            mHappyPlaceDetails =  intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS)
+            mEstateDetails =  intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS)
         }
 
-        selectDialogInit()
 
         defaultImage = ContentResolver.SCHEME_ANDROID_RESOURCE +"://" +
                 resources.getResourcePackageName(R.drawable.add_screen_image_placeholder) + '/' +
                 resources.getResourceTypeName(R.drawable.add_screen_image_placeholder) + '/' +
                 resources.getResourceEntryName(R.drawable.add_screen_image_placeholder)
-        if (mHappyPlaceDetails == null){
+        if (mEstateDetails == null){
         imagesList.add(Uri.parse(defaultImage))
         }
 
@@ -243,11 +276,11 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         updateDateInView()
 
         //set data on views when edit estate
-        if (mHappyPlaceDetails != null ) {
+        if (mEstateDetails != null ) {
             supportActionBar?.title = "تعديل العقار"
-            et_date.setText(mHappyPlaceDetails!!.loggingDate)
-            type = mHappyPlaceDetails!!.type!!
-            offerOrDemand = mHappyPlaceDetails!!.offerOrDemand
+            et_date.setText(mEstateDetails!!.loggingDate)
+            type = mEstateDetails!!.type!!
+            offerOrDemand = mEstateDetails!!.offerOrDemand
             when(type){
                 RENT ->{
                     rbRent.isChecked = true
@@ -268,53 +301,89 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
 
                 }
             }
-            et_location.setText(mHappyPlaceDetails!!.location)
-            mLatitude = mHappyPlaceDetails!!.latitude
-            mLongitude = mHappyPlaceDetails!!.longitude
-            area = mHappyPlaceDetails!!.area
+            et_location.setText(mEstateDetails!!.location)
+            mLatitude = mEstateDetails!!.latitude
+            mLongitude = mEstateDetails!!.longitude
+            area = mEstateDetails!!.area
             et_area.setText("${area.toString()} متر مربع")
-            et_roomNo.setText(mHappyPlaceDetails!!.roomNo)
-            et_directions.setText(mHappyPlaceDetails!!.directions)
-            et_height.setText(mHappyPlaceDetails!!.height)
-            et_front_or_back.setText(mHappyPlaceDetails!!.frontOrBack)
-            floorHousesNo = mHappyPlaceDetails!!.floorHousesNo
+            roomNo = mEstateDetails!!.roomNo!!
+            if (mEstateDetails!!.roomNoHigh == null) {
+                et_roomNo.setText(roomNo)
+            }else{
+                roomNoHigh = mEstateDetails!!.roomNoHigh
+                et_roomNo.setText("$roomNo - $roomNoHigh")
+            }
+            et_directions.setText(mEstateDetails!!.directions)
+            height = mEstateDetails!!.height!!
+            if (mEstateDetails!!.heightHigh == null) {
+                et_height.setText(mEstateDetails!!.height)
+            }else{
+                heightHigh = mEstateDetails!!.heightHigh
+                et_height.setText("$height - $heightHigh")
+            }
+            et_front_or_back.setText(mEstateDetails!!.frontOrBack)
+            floorHousesNo = mEstateDetails!!.floorHousesNo
             et_floor_houses_no.setText(floorHousesNo.toString())
-            et_situation.setText(mHappyPlaceDetails!!.situation)
-            partialFurnitureItems = mHappyPlaceDetails!!.partialFurniture!!
-            furniture = mHappyPlaceDetails!!.furniture!!
-            et_furniture.setText("${mHappyPlaceDetails!!.furniture}: $partialFurnitureItems")
-            et_furniture_situation.setText(mHappyPlaceDetails!!.furnitureSituation)
-            price = mHappyPlaceDetails!!.price
-            priceType = mHappyPlaceDetails!!.priceType!!
+            et_situation.setText(mEstateDetails!!.situation)
+            partialFurnitureItems = mEstateDetails!!.partialFurniture!!
+            furniture = mEstateDetails!!.furniture!!
+            if (partialFurnitureItems.isNotEmpty()) {
+                et_furniture.setText("${mEstateDetails!!.furniture}: $partialFurnitureItems")
+            }else{
+                et_furniture.setText("${mEstateDetails!!.furniture}")
+            }
+            et_furniture_situation.setText(mEstateDetails!!.furnitureSituation)
+            price = mEstateDetails!!.price
+            priceType = mEstateDetails!!.priceType!!
             et_price.setText("${price.toString()} $priceType")
-            et_legal.setText(mHappyPlaceDetails!!.legal)
-            et_owner.setText(mHappyPlaceDetails!!.owner)
-            et_owner_standards.setText(mHappyPlaceDetails!!.ownerStandards)
-            loggerName = mHappyPlaceDetails!!.loggerName!!
-            loggerType = mHappyPlaceDetails!!.loggerType!!
-            et_logger_type.setText("${mHappyPlaceDetails!!.loggerType}")
+            et_legal.setText(mEstateDetails!!.legal)
+            et_owner.setText(mEstateDetails!!.owner)
+            et_owner_standards.setText(mEstateDetails!!.ownerStandards)
+            loggerName = mEstateDetails!!.loggerName!!
+            loggerType = mEstateDetails!!.loggerType!!
+            et_logger_type.setText("${mEstateDetails!!.loggerType}")
             if (loggerName.isNotEmpty()){
                 et_logger_type.append(": $loggerName")
             }
-            et_owner_tel.setText(mHappyPlaceDetails!!.ownerTel)
-            et_logger_tel.setText(mHappyPlaceDetails!!.loggerTel)
-            et_priority.setText(mHappyPlaceDetails!!.priority)
-            et_rent_duration.setText(mHappyPlaceDetails!!.rentDuration)
-            et_positives.setText(mHappyPlaceDetails!!.positives)
-            et_negatives.setText(mHappyPlaceDetails!!.negatives)
-            imagesList = mHappyPlaceDetails!!.images!!
+            et_owner_tel.setText(mEstateDetails!!.ownerTel)
+            et_logger_tel.setText(mEstateDetails!!.loggerTel)
+            et_priority.setText(mEstateDetails!!.priority)
+            et_rent_duration.setText(mEstateDetails!!.rentDuration)
+            et_positives.setText(mEstateDetails!!.positives)
+            et_negatives.setText(mEstateDetails!!.negatives)
+            imagesList = mEstateDetails!!.images!!
             Log.e("hplist","${imagesList}")
 
             btn_save.text = "تعديل"
         }
 
-        if(offerOrDemand == MainActivity.DEMAND){
+        if (offerOrDemand == MainActivity.DEMAND){
+            til_negatives.visibility = View.GONE
+            rvAddImages.visibility = View.GONE
+            tv_add_image.visibility = View.GONE
+            til_furniture_situation.hint = resources.getString(R.string.edit_text_hint_furniture_situation_low)
+            til_situation.hint = resources.getString(R.string.edit_text_hint_situation_low)
+            til_owner_standards.hint = resources.getString(R.string.edit_text_hint_renter_standards)
+            til_price.hint = resources.getString(R.string.edit_text_hint_price_low)
+            til_owner.hint = resources.getString(R.string.edit_text_hint_demander)
+            til_owner_tel.hint = resources.getString(R.string.edit_text_hint_demander_tel)
             type = BUY
             rbSale.text = resources.getString(R.string.rb_text_buy)
+
         }else{
+            til_negatives.visibility = View.VISIBLE
+            rvAddImages.visibility = View.VISIBLE
+            tv_add_image.visibility = View.VISIBLE
+            til_furniture_situation.hint = resources.getString(R.string.edit_text_hint_furniture_situation)
+            til_situation.hint = resources.getString(R.string.edit_text_hint_situation)
+            til_price.hint = resources.getString(R.string.edit_text_hint_price)
+            til_owner_standards.hint = resources.getString(R.string.edit_text_hint_owner_standards)
+            til_owner.hint = resources.getString(R.string.edit_text_hint_owner)
+            til_owner_tel.hint = resources.getString(R.string.edit_text_hint_owner_tel)
             rbSale.text = resources.getString(R.string.rb_text_sale)
             type = SALE
         }
+        selectDialogInit()
 
         setupImagesRecyclerView()
 
@@ -356,12 +425,14 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         priceDialog.setContentView(R.layout.price_dialog_layout)
         selectRecycleView = selectDialog.rvDialog
 
-        heightList = arrayListOf(SECOND_UNDER_GROUND, FIRST_UNDER_GROUND, SAME_GROUND,
+        heightList = arrayListOf(
+            NOT_DETECTED, SECOND_UNDER_GROUND, FIRST_UNDER_GROUND, SAME_GROUND,
             HANGING, FIRST, SECOND, THIRD, FOURTH, FIFTH, SIXTH, SURFACE, GARDEN_UNDER_GROUND,
             GARDEN_SAME_GROUND, GARDEN_UPPER_GROUND)
         heightAdapter = DialogAdapter(this,heightList)
 
-        roomNoList = arrayListOf(ONE_ROOM, ONE_R00M_WITH_SALON,
+        roomNoList = arrayListOf(
+            NOT_DETECTED, ONE_ROOM, ONE_R00M_WITH_SALON,
             TWO_ROOM_WITH_DISTRIBUTOR, TWO_R00M_WITH_SALON,
             THREE_ROOM_WITH_DISTRIBUTOR, THREE_R00M_WITH_SALON,
             FOUR_ROOM_WITH_DISTRIBUTOR, FOUR_R00M_WITH_SALON,
@@ -386,11 +457,19 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         frontOrBackList = arrayListOf(FRONT, BACK)
         frontOrBackAdapter = DialogAdapter(this,frontOrBackList)
 
-        directionsList = arrayListOf(NORTH, SOUTH, WEST, EAST,
-            CORNER_NORTH_EAST, CORNER_NORTH_WEST, CORNER_SOUTH_EAST, CORNER_SOUTH_WEST,
-            PADDING_NORTH_SOUTH, PADDING_EAST_WEST,
-            HALF_NORTH_EAST_SOUTH, HALF_NORTH_WEST_SOUTH, HALF_EAST_NORTH_WEST, HALF_EAST_SOUTH_WEST,
-            FULL)
+        directionsList =
+            if (offerOrDemand == MainActivity.OFFER)
+                arrayListOf(NORTH, SOUTH, WEST, EAST,
+                    CORNER_NORTH_EAST, CORNER_NORTH_WEST, CORNER_SOUTH_EAST, CORNER_SOUTH_WEST,
+                    PADDING_NORTH_SOUTH, PADDING_EAST_WEST,
+                    HALF_NORTH_EAST_SOUTH, HALF_NORTH_WEST_SOUTH, HALF_EAST_NORTH_WEST, HALF_EAST_SOUTH_WEST,
+                    FULL)
+            else
+                arrayListOf(NORTH, SOUTH, WEST, EAST,
+                    CORNER,
+                    PADDING,
+                    HALF,
+                    FULL)
         directionsAdapter = DialogAdapter(this, directionsList)
 
         legalList = arrayListOf(CONTRACT, COURT, GREEN_STAMP)
@@ -432,7 +511,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
 
                     if (imagesList[0] != Uri.parse(defaultImage)){
-                        if (mHappyPlaceDetails == null) {
+                        if (mEstateDetails == null) {
                             deleteFile(imagesList[viewHolder.adapterPosition])
                         }else{
                             toDeleteImageList.add(imagesList[viewHolder.adapterPosition])
@@ -490,21 +569,21 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                     et_location.text.isNullOrEmpty() -> {
                         Toast.makeText(this, "رجاء أدخل العنوان", Toast.LENGTH_SHORT).show()
                     }
-                    et_roomNo.text.isNullOrEmpty() -> {
+                    et_roomNo.text.isNullOrEmpty() && offerOrDemand == MainActivity.OFFER -> {
                         Toast.makeText(this, "رجاء أدخل عدد الغرف", Toast.LENGTH_SHORT).show()
                     }
-                    et_height.text.isNullOrEmpty() -> {
+                    et_height.text.isNullOrEmpty() && offerOrDemand == MainActivity.OFFER  -> {
                         Toast.makeText(this, "رجاء أدخل الطابق", Toast.LENGTH_SHORT).show()
                     }
-                    et_furniture.text.isNullOrEmpty()  -> {
+                    et_furniture.text.isNullOrEmpty() && offerOrDemand == MainActivity.OFFER  -> {
                         Toast.makeText(this, "رجاء أدخل الفرش", Toast.LENGTH_SHORT).show()
                     }
                     et_owner_tel.text.isNullOrEmpty() && et_logger_tel.text.isNullOrEmpty() -> {
                         Toast.makeText(this, "رجاء أدخل رقم الهاتف", Toast.LENGTH_SHORT).show()
                     }
                     else -> {
-                        val happyPlaceModel = HappyPlaceModel(
-                            if (mHappyPlaceDetails == null) 0 else mHappyPlaceDetails!!.id,
+                        val estateModel = EstateModel(
+                            if (mEstateDetails == null) 0 else mEstateDetails!!.id,
                             et_date.text.toString(),
                             offerOrDemand,
                             type,
@@ -512,9 +591,11 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                             mLatitude,
                             mLongitude,
                             area,
-                            et_roomNo.text.toString(),
+                            roomNo,
+                            roomNoHigh,
                             et_directions.text.toString(),
-                            et_height.text.toString(),
+                            height,
+                            heightHigh,
                             et_front_or_back.text.toString(),
                             floorHousesNo,
                             et_situation.text.toString(),
@@ -542,8 +623,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                             imagesList
                             )
                         val dbHandler = DatabaseHandler(this)
-                        if (mHappyPlaceDetails == null){
-                        val addHappyPlace = dbHandler.addHappyPlace(happyPlaceModel)
+                        if (mEstateDetails == null){
+                        val addHappyPlace = dbHandler.addPlace(estateModel)
                         if (addHappyPlace > 0){
                             setResult(RESULT_OK)
                             finish()
@@ -552,7 +633,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                             for (image in toDeleteImageList){
                                 deleteFile(image)
                             }
-                            val updateHappyPlace = dbHandler.updateHappyPlace(happyPlaceModel)
+                            val updateHappyPlace = dbHandler.updateEstate(estateModel)
                             if (updateHappyPlace > 0){
                                 setResult(RESULT_OK)
                                 finish()
@@ -563,46 +644,86 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
             R.id.et_height -> {
-                selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_height)
+                if(offerOrDemand == MainActivity.DEMAND){
+                    selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_height_low)
+                    selectNumber = SELECT_LOW
+                }else{
+                    selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_height)
+                }
                 selectRecycleView.adapter = heightAdapter
                 heightAdapter.setOnClickListener(object: DialogAdapter.OnClickListener{
                     override fun onClick(position: Int) {
-                        et_height.setText(heightList[position])
-                        selectDialog.dismiss()
+                        if(offerOrDemand == MainActivity.DEMAND){
+                            if(selectNumber == SELECT_LOW){
+                                selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_height_high)
+                                height = heightList[position]
+                                selectNumber = SELECT_HIGH
+                            }else{
+                                heightHigh = heightList[position]
+                                et_height.setText("$height - $heightHigh")
+                                selectNumber = SELECT_LOW
+                                selectDialog.dismiss()
+                            }
+                        }else{
+                            height = heightList[position]
+                            et_height.setText(height)
+                            selectDialog.dismiss()
+                        }
+
                     }
                 })
                 selectDialog.show()
             }
             R.id.et_roomNo -> {
-                selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_roomNo)
+                if(offerOrDemand == MainActivity.DEMAND){
+                    selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_roomNo_low)
+                    selectNumber = SELECT_LOW
+                }else{
+                    selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_roomNo)
+                }
                 selectRecycleView.adapter = roomNoAdapter
                 roomNoAdapter.setOnClickListener(object: DialogAdapter.OnClickListener{
                     override fun onClick(position: Int) {
-                        if (roomNoList[position] == OTHER_ROOM_N0){
-                            othersDialog.tv_other_dialog_title.text =
-                                resources.getString(R.string.other_dialog_title_room_no)
-                            othersDialog.tv_other_dialog_cancel.setOnClickListener {
-                                othersDialog.dismiss()
-                                et_roomNo.text?.clear()
+                        if(offerOrDemand == MainActivity.DEMAND){
+                            if(selectNumber == SELECT_LOW){
+                                selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_roomNo_high)
+                                roomNo = roomNoList[position]
+                                selectNumber = SELECT_HIGH
+                            }else{
+                                roomNoHigh = roomNoList[position]
+                                et_roomNo.setText("$roomNo - $roomNoHigh")
+                                selectNumber = SELECT_LOW
+                                selectDialog.dismiss()
                             }
-                            othersDialog.tv_other_dialog_ok.setOnClickListener {
-                                if (othersDialog.et_other_dialog.text.isNullOrEmpty()) {
-                                    Toast.makeText(
-                                        this@AddEstateActivity,
-                                        "رجاءً أدخل عدد الغرف",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } else {
-                                    et_roomNo.text = othersDialog.et_other_dialog.text
-                                    othersDialog.dismiss()
-                                }
-                            }
-                            othersDialog.et_other_dialog.text?.clear()
-                            othersDialog.show()
                         }else {
-                            et_roomNo.setText(roomNoList[position])
+                            if (roomNoList[position] == OTHER_ROOM_N0) {
+                                othersDialog.tv_other_dialog_title.text =
+                                    resources.getString(R.string.other_dialog_title_room_no)
+                                othersDialog.tv_other_dialog_cancel.setOnClickListener {
+                                    othersDialog.dismiss()
+                                    et_roomNo.text?.clear()
+                                }
+                                othersDialog.tv_other_dialog_ok.setOnClickListener {
+                                    if (othersDialog.et_other_dialog.text.isNullOrEmpty()) {
+                                        Toast.makeText(
+                                            this@AddEstateActivity,
+                                            "رجاءً أدخل عدد الغرف",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        roomNo = othersDialog.et_other_dialog.text.toString()
+                                        et_roomNo.text = othersDialog.et_other_dialog.text
+                                        othersDialog.dismiss()
+                                    }
+                                }
+                                othersDialog.et_other_dialog.text?.clear()
+                                othersDialog.show()
+                            } else {
+                                roomNo = roomNoList[position]
+                                et_roomNo.setText(roomNo)
+                            }
+                            selectDialog.dismiss()
                         }
-                        selectDialog.dismiss()
                     }
                 })
                 selectDialog.show()
@@ -755,7 +876,11 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 selectDialog.show()
             }
             R.id.et_owner_standards -> {
-                selectDialog.tv_dialog_title.text = resources.getString(R.string.edit_text_hint_owner_standards)
+                selectDialog.tv_dialog_title.text =
+                    if(offerOrDemand == MainActivity.OFFER)
+                        resources.getString(R.string.edit_text_hint_owner_standards)
+                    else
+                        resources.getString(R.string.edit_text_hint_renter_standards)
                 selectRecycleView.adapter = ownerStandardsAdapter
                 ownerStandardsAdapter.setOnClickListener(object: DialogAdapter.OnClickListener{
                     override fun onClick(position: Int) {
@@ -800,6 +925,7 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 selectDialog.show()
             }
             R.id.et_price -> {
+                priceType = ""
                 var priceTypesList = ArrayList<String>()
                 val priceUnitsList = arrayListOf(THOUSANDS_POUNDS, MILLION_POUNDS, BILLION_POUNDS, DOLLARS, THOUSANDS_DOLLARS)
                 when(type){
@@ -812,6 +938,9 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                     RENT-> {
                         priceTypesList = arrayListOf(ANNUAL_RENT, HALF_ANNUAL_RENT, MONTHLY_RENT)
                     }
+                    /*BUY -> {
+                        priceTypesList = arrayListOf(FINAL_PRICE, LITTLE_ARGUE_PRICE, ARGUE_PRICE)
+                    }*/
                 }
                 var factor = 5
                 var numberFormat = "%.3f"
@@ -883,7 +1012,11 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                     priceDialog.dismiss()
                 }
                 priceDialog.tv_price_dialog_ok.setOnClickListener {
-                    priceType = "$priceUnit - $priceType"
+                    priceType = if (priceType.isNotEmpty()){
+                        "$priceUnit - $priceType"
+                    }else{
+                        priceUnit
+                    }
                     et_price.setText("$price $priceType")
                     priceDialog.dismiss()
                 }
@@ -1009,60 +1142,47 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
+    private fun permissionLauncher(){
+
+        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                this,
+                readImagePermission) ||
+            ActivityCompat.shouldShowRequestPermissionRationale(
+                this,
+                cameraPermission)
+        ) {
+            showRationalDialogForPermissions()
+        } else {
+            permissionsResultLauncher.launch(arrayOf(readImagePermission, cameraPermission))
+        }
+    }
+
     private fun takePhotoFromCamera() {
-        Dexter.withContext(this).withPermission(
-            android.Manifest.permission.CAMERA).withListener(
-            object : PermissionListener{
-                override fun onPermissionGranted(report: PermissionGrantedResponse?) {
-                    val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
-                    val file = createImageFile()
-                    cameraPhotoPath = file.absolutePath
-                    cameraPhotoUri = createAccessibleUriForFile(file)
-                    cameraPhotoUri.let {
-                        intent.putExtra(MediaStore.EXTRA_OUTPUT,it)
-                        openCameraLauncher.launch(intent)
-                    }
-
-                }
-
-                override fun onPermissionDenied(report: PermissionDeniedResponse?) {
-                    Toast.makeText(this@AddEstateActivity,
-                        "Oops, you have just denied the permissions",
-                        Toast.LENGTH_SHORT).show()
-                }
-
-                override fun onPermissionRationaleShouldBeShown(
-                    permissons: PermissionRequest?,
-                    token: PermissionToken?
-                ) {
-                    showRationalDialogForPermissions()
-                }
+        if(ContextCompat.checkSelfPermission(this, cameraPermission) == PackageManager.PERMISSION_GRANTED){
+            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            val file = createImageFile()
+            cameraPhotoPath = file.absolutePath
+            cameraPhotoUri = createAccessibleUriForFile(file)
+            cameraPhotoUri.let {
+                intent.putExtra(MediaStore.EXTRA_OUTPUT,it)
+                openCameraLauncher.launch(intent)
             }
-            ).onSameThread().check()
+        } else {
+            permissionLauncher()
+        }
     }
 
     private fun chooseImageFromGallery() {
-        Dexter.withContext(this).withPermissions(
-            android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            android.Manifest.permission.READ_EXTERNAL_STORAGE,
-        ).withListener(object: MultiplePermissionsListener {
-            override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
-                if (report!!.areAllPermissionsGranted()) {
-                    val pickIntent = Intent(Intent.ACTION_OPEN_DOCUMENT)
-                    pickIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-                    pickIntent.addCategory(Intent.CATEGORY_OPENABLE)
-                    pickIntent.type = "image/*"
-                    openGalleryLauncher.launch(pickIntent)
-                }
-            }
-            override fun onPermissionRationaleShouldBeShown(
-                permissons: MutableList<PermissionRequest>,
-                token: PermissionToken
-            ) {
-                showRationalDialogForPermissions()
-            }
-    }).onSameThread().check()
+        if(ContextCompat.checkSelfPermission(this, readImagePermission) == PackageManager.PERMISSION_GRANTED){
+            val pickIntent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+            pickIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+            pickIntent.addCategory(Intent.CATEGORY_OPENABLE)
+            pickIntent.type = "image/*"
+            openGalleryLauncher.launch(pickIntent)
+        } else {
+            permissionLauncher()
+        }
     }
 
     private fun showRationalDialogForPermissions() {
@@ -1220,6 +1340,9 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         private const val PLACE_AUTOCOMPLETE_REQUEST_CODE = 3
         private const val IS_DONE = 1
         private const val IS_NOT_DONE = 0
+        internal const val NOT_DETECTED = "غير محدد"
+        private const val SELECT_LOW = 1
+        private const val SELECT_HIGH = 2
         //types
         internal const val SALE = "بيع"
         internal const val RENT = "آجار"
@@ -1280,6 +1403,9 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         private const val BACK  = "خلفي"
         //directions list
         internal const val FULL  = "بلاطة كاملة: الاتجاهات الأربعة"
+        internal const val HALF  = "نصف بلاطة"
+        internal const val CORNER  = "زاوية"
+        internal const val PADDING  = "حشوة"
         internal const val HALF_EAST_NORTH_WEST  = "نصف بلاطة: شرقي - شمالي - غربي"
         internal const val HALF_EAST_SOUTH_WEST  = "نصف بلاطة: شرقي - قبلي - غربي"
         internal const val HALF_NORTH_WEST_SOUTH  = "نصف بلاطة: شمالي - غربي - قبلي"
@@ -1310,8 +1436,8 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
         internal const val NOT_IMPORTANT_NOT_URGENT  = "غير مستعجل وغير هام"
         //owner standards list
         private const val NULL  = "لا يوجد"
-        private const val GROOMS_ONLY  = "عرسان حصراً"
-        private const val FEMALE_STUDENTS  = "طالبات حصراً"
+        private const val GROOMS_ONLY  = "عرسان فقط"
+        private const val FEMALE_STUDENTS  = "طالبات فقط"
         private const val SMALL_FAMILY  = "عائلة صغيرة"
         private const val CHILDREN_LESS_FAMILY  = "عائلة بدون أطفال"
         private const val OTHER_STANDARDS  = "معايير أخرى"

@@ -88,5 +88,15 @@
     <string name="cb_text_legal_court">حكم محكمة</string>
     <string name="cb_text_priority_important">هام</string>
     <string name="cb_text_priority_urgent">مستعجل</string>
+    <string name="edit_text_hint_renter_standards">معايير المستأجر</string>
+    <string name="edit_text_hint_demander">اسم صاحب الطلب</string>
+    <string name="edit_text_hint_demander_tel">هاتف صاحب الطلب</string>
+    <string name="edit_text_hint_height_low">الطابق (الحد الأدنى)</string>
+    <string name="edit_text_hint_height_high">الطابق (الحد الأعلى)</string>
+    <string name="edit_text_hint_roomNo_high">عدد الغرف (الحد الأعلى)</string>
+    <string name="edit_text_hint_roomNo_low">عدد الغرف (الحد الأنى)</string>
+    <string name="edit_text_hint_furniture_situation_low">حالة الفرش (الحد الأدنى)</string>
+    <string name="edit_text_hint_situation_low">حالة المنزل (الحد الأدنى)</string>
+    <string name="edit_text_hint_price_low">السعر (الحد الأعلى)</string>
 
 </resources>

@@ -3,21 +3,20 @@ package com.othman.jaserestate.activities
 import android.content.*
 import android.net.Uri
 import android.os.Bundle
-import android.os.StrictMode
-import android.os.StrictMode.VmPolicy
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.othman.jaserestate.R
 import com.othman.jaserestate.adapters.ImagesAdapter
-import com.othman.jaserestate.models.HappyPlaceModel
+import com.othman.jaserestate.models.EstateModel
+import kotlinx.android.synthetic.main.activity_add_estate.*
 import kotlinx.android.synthetic.main.activity_estate_detail.*
 import kotlinx.android.synthetic.main.activity_estate_detail.view.*
 
 
 class EstateDetailActivity : AppCompatActivity() {
-    private var model:HappyPlaceModel? = null
+    private var model:EstateModel? = null
     private lateinit var imagesAdapter :ImagesAdapter
     private var estateSharingText = ""
     private lateinit var defaultImage: String
@@ -65,9 +64,17 @@ class EstateDetailActivity : AppCompatActivity() {
             supportActionBar?.title = model?.location
             setTextViewString(model?.type, tv_type)
             setTextViewString(model?.location, tv_location)
-            setTextViewString(model?.roomNo, tv_roomNo)
+            if (model!!.roomNoHigh == null) {
+                setTextViewString(model?.roomNo, tv_roomNo)
+            }else{
+                setTextViewString("${model!!.roomNo} - ${model!!.roomNoHigh}", tv_roomNo)
+            }
             setTextViewString("${model?.area.toString()} متر مربع", tv_area)
-            setTextViewString(model?.height, tv_height)
+            if (model!!.heightHigh == null) {
+                setTextViewString(model?.height, tv_height)
+            }else{
+                setTextViewString("${model!!.height} - ${model!!.heightHigh}", tv_height)
+            }
             setTextViewString(model?.directions, tv_directions)
             setTextViewString(model?.frontOrBack, tv_front_or_back)
             setTextViewString(model?.floorHousesNo.toString(), tv_floor_houses_no)

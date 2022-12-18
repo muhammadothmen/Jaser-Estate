@@ -15,18 +15,18 @@ import com.othman.jaserestate.R
 import com.othman.jaserestate.activities.AddEstateActivity
 import com.othman.jaserestate.activities.MainActivity
 import com.othman.jaserestate.database.DatabaseHandler
-import com.othman.jaserestate.models.HappyPlaceModel
+import com.othman.jaserestate.models.EstateModel
 import kotlinx.android.synthetic.main.activity_add_estate.*
 import kotlinx.android.synthetic.main.item_happy_place.view.*
 import java.util.*
 
-open class placeAdapter(
+open class PlaceAdapter(
     private val context: Context,
-    private var list: ArrayList<HappyPlaceModel>
+    private var list: ArrayList<EstateModel>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>(), Filterable {
 
     private var onClickListener: OnClickListener? = null
-    var placesFilterList = ArrayList<HappyPlaceModel>()
+    var placesFilterList = ArrayList<EstateModel>()
     init {
         placesFilterList = list
     }
@@ -108,7 +108,7 @@ open class placeAdapter(
     fun removeAt(position: Int) {
 
         val dbHandler = DatabaseHandler(context)
-        val isDeleted = dbHandler.deleteHappyPlace(placesFilterList[position])
+        val isDeleted = dbHandler.deleteEstate(placesFilterList[position])
 
         if (isDeleted > 0) {
             val model = placesFilterList[position]
@@ -123,7 +123,7 @@ open class placeAdapter(
         val model = placesFilterList[position]
         model.isDone = situation
         val dbHandler = DatabaseHandler(context)
-        val updateHappyPlace = dbHandler.updateHappyPlace(model)
+        val updateHappyPlace = dbHandler.updateEstate(model)
 
     }
 
@@ -135,7 +135,7 @@ open class placeAdapter(
     }
 
     interface OnClickListener {
-        fun onClick(position: Int, model: HappyPlaceModel)
+        fun onClick(position: Int, model: EstateModel)
     }
 
     /**
@@ -150,7 +150,7 @@ open class placeAdapter(
                 if (charSearch.isEmpty()) {
                     placesFilterList = list
                 } else {
-                    val resultList = ArrayList<HappyPlaceModel>()
+                    val resultList = ArrayList<EstateModel>()
                     for (row in list){
                         if (row.location?.lowercase(Locale.ROOT)!!.contains(charSearch.lowercase(Locale.ROOT))
                             || row.height?.lowercase(Locale.ROOT)!!.contains(charSearch.lowercase(Locale.ROOT))
@@ -182,7 +182,7 @@ open class placeAdapter(
 
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                placesFilterList = results?.values as ArrayList<HappyPlaceModel>
+                placesFilterList = results?.values as ArrayList<EstateModel>
                 Log.e("mph","puplish")
                 notifyDataSetChanged()
             }

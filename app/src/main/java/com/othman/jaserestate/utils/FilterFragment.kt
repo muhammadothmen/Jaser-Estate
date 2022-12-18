@@ -1,4 +1,4 @@
-package com.othman.jaserestate
+package com.othman.jaserestate.utils
 
 import android.os.Bundle
 import android.util.Log
@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.slider.RangeSlider
+import com.othman.jaserestate.R
 import com.othman.jaserestate.activities.AddEstateActivity
 import com.othman.jaserestate.activities.MainActivity
 import kotlinx.android.synthetic.main.activity_main.*
@@ -403,6 +404,6 @@ class FilterFragment : Fragment(R.layout.fragment_filter) {
         super.onResume()
         activity?.fl_show_data?.visibility = View.GONE
     }
-    
+
     }
 

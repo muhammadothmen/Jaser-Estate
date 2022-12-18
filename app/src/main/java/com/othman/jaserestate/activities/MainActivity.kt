@@ -16,12 +16,12 @@ import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.othman.jaserestate.FilterFragment
+import com.othman.jaserestate.utils.FilterFragment
 import com.othman.jaserestate.R
-import com.othman.jaserestate.adapters.placeAdapter
+import com.othman.jaserestate.adapters.PlaceAdapter
 import com.othman.jaserestate.database.DatabaseHandler
 import com.othman.jaserestate.databinding.ActivityMainBinding
-import com.othman.jaserestate.models.HappyPlaceModel
+import com.othman.jaserestate.models.EstateModel
 import com.othman.jaserestate.utils.SwipeToDeleteCallback
 import com.othman.jaserestate.utils.SwipeToEditCallback
 import kotlinx.android.synthetic.main.activity_main.*
@@ -33,8 +33,8 @@ class MainActivity : AppCompatActivity() {
     private var binding: ActivityMainBinding? = null
     private var offerOrDemand = OFFER
     private var isDone = NOT_DONE
-    private lateinit var placesAdapter: placeAdapter
-    private var  getHappyPlacesList : ArrayList<HappyPlaceModel>? = null
+    private lateinit var placesAdapter: PlaceAdapter
+    private var  getEstateList : ArrayList<EstateModel>? = null
     private var defaultWhereClauseQuery = "where offerOrDemand = $offerOrDemand and isDone = $isDone"
     internal var whereClauseQuery = defaultWhereClauseQuery
 
@@ -117,25 +117,25 @@ class MainActivity : AppCompatActivity() {
 
     internal fun getHappyPlacesListFromLocalDB(){
         val dbHandler = DatabaseHandler(this)
-        getHappyPlacesList  = dbHandler.getHappyPlacesList(whereClauseQuery)
+        getEstateList  = dbHandler.getPlacesList(whereClauseQuery)
 
-        if (getHappyPlacesList!!.size > 0) {
+        if (getEstateList!!.size > 0) {
             rvHappyPlacesList.visibility = View.VISIBLE
             tvNoRecordsAvailable.visibility = View.GONE
-            setupHappyPlacesRecyclerView(getHappyPlacesList!!)
+            setupEstatesRecyclerView(getEstateList!!)
         } else {
             rvHappyPlacesList.visibility = View.GONE
             tvNoRecordsAvailable.visibility = View.VISIBLE
         }
     }
 
-    private fun setupHappyPlacesRecyclerView(happyPlacesList: ArrayList<HappyPlaceModel>) {
+    private fun setupEstatesRecyclerView(happyPlacesList: ArrayList<EstateModel>) {
 
 
         rvHappyPlacesList.layoutManager = LinearLayoutManager(this)
         rvHappyPlacesList.setHasFixedSize(true)
 
-        placesAdapter = placeAdapter(this, happyPlacesList)
+        placesAdapter = PlaceAdapter(this, happyPlacesList)
         rvHappyPlacesList.adapter = placesAdapter
 
         tbMain.placesSearch.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
@@ -171,8 +171,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        placesAdapter.setOnClickListener(object : placeAdapter.OnClickListener{
-            override fun onClick(position: Int,model: HappyPlaceModel) {
+        placesAdapter.setOnClickListener(object : PlaceAdapter.OnClickListener{
+            override fun onClick(position: Int,model: EstateModel) {
                 val intent = Intent(this@MainActivity,EstateDetailActivity::class.java)
                 intent.putExtra(EXTRA_PLACE_DETAILS,model)
                 startActivity(intent)
@@ -181,7 +181,7 @@ class MainActivity : AppCompatActivity() {
 
         val editSwipeToEdit = object: SwipeToEditCallback(this){
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val adapter = rvHappyPlacesList.adapter as placeAdapter
+                val adapter = rvHappyPlacesList.adapter as PlaceAdapter
                 if (offerOrDemand == HISTORY){
                     adapter.changeDoneSituation(viewHolder.adapterPosition, NOT_DONE)
                     getHappyPlacesListFromLocalDB()
@@ -195,11 +195,15 @@ class MainActivity : AppCompatActivity() {
 
         val deleteSwipeToDelete = object: SwipeToDeleteCallback(this){
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val adapter = rvHappyPlacesList.adapter as placeAdapter
+                val adapter = rvHappyPlacesList.adapter as PlaceAdapter
                 if (offerOrDemand == HISTORY){
-                    val imageListToDelete = getHappyPlacesList?.get(viewHolder.adapterPosition)?.images!!
+                    val imageListToDelete = getEstateList?.get(viewHolder.adapterPosition)?.images!!
                     for (image in imageListToDelete){
-                        deleteFile(image)
+                        try {
+                            deleteFile(image)
+                        }catch (e: Exception){
+                            Log.e("Jasser", e.toString())
+                        }
                     }
                     adapter.removeAt(viewHolder.adapterPosition)
                 }else {
@@ -224,6 +228,11 @@ class MainActivity : AppCompatActivity() {
             defaultWhereClauseQuery = "where isDone = $isDone"
         }
         whereClauseQuery = defaultWhereClauseQuery
+    }
+
+    override fun onResume() {
+        super.onResume()
+        getHappyPlacesListFromLocalDB()
     }
 
 

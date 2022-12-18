@@ -27,6 +27,7 @@ class DialogAdapter(private val context: Context, private val itemList: List<Str
             holder.itemView.setOnClickListener {
                 if (onClickListener != null) {
                     onClickListener!!.onClick(position)
+                    it.background = context.resources.getDrawable(R.color.button_background_color)
                 }
             }
         }
