@@ -1312,8 +1312,6 @@ class AddEstateActivity : AppCompatActivity(), View.OnClickListener {
                 it
             )
         }
-
-
     }
 
     private fun createImageFile(): File {
